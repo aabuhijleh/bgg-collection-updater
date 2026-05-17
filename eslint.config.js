@@ -1,0 +1,18 @@
+import tsParser from "@typescript-eslint/parser";
+import { defineConfig } from "eslint/config";
+import reactHooks from "eslint-plugin-react-hooks";
+
+export default defineConfig([
+  {
+    ...reactHooks.configs.flat.recommended,
+    files: ["src/**/*.ts*"],
+    languageOptions: { parser: tsParser },
+  },
+  {
+    ignores: [
+      "node_modules/**",
+      "src/components/ui/**",
+      "src/routeTree.gen.ts",
+    ],
+  },
+]);

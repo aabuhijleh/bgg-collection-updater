@@ -1,0 +1,9 @@
+{
+  "recommendations": [
+    "biomejs.biome",
+    "bradlc.vscode-tailwindcss",
+    "blazejkustra.react-compiler-marker",
+    "oven.bun-vscode"
+  ],
+  "unwantedRecommendations": ["esbenp.prettier-vscode"]
+}

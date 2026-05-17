@@ -1,0 +1,61 @@
+export function parseInput(raw: string): string[] {
+  const trimmed = raw.trim();
+  if (!trimmed) return [];
+
+  const semicolons = (trimmed.match(/;/g) || []).length;
+  const newlines = (trimmed.match(/\n/g) || []).length;
+  const commas = (trimmed.match(/,/g) || []).length;
+
+  let delimiter: string;
+  if (semicolons >= newlines && semicolons >= commas) {
+    delimiter = ";";
+  } else if (newlines >= commas) {
+    delimiter = "\n";
+  } else {
+    delimiter = ",";
+  }
+
+  const items = trimmed
+    .split(delimiter)
+    .map((s) => s.trim().replace(/^["']|["']$/g, ""))
+    .filter(Boolean);
+
+  return [...new Set(items)];
+}
+
+export function parseIds(raw: string): number[] {
+  const trimmed = raw.trim();
+  if (!trimmed) return [];
+
+  const lines = trimmed
+    .split("\n")
+    .map((l) => l.trim())
+    .filter(Boolean);
+
+  const hasHeader = lines.length > 0 && /bgg_id|bggid|id/i.test(lines[0]);
+  const dataLines = hasHeader ? lines.slice(1) : lines;
+
+  const ids: number[] = [];
+  for (const line of dataLines) {
+    const parts = line
+      .split(/[,;]/)
+      .map((p) => p.trim().replace(/^["']|["']$/g, ""));
+    for (const part of parts) {
+      const num = Number(part);
+      if (!Number.isNaN(num) && num > 0 && Number.isInteger(num)) {
+        ids.push(num);
+      }
+    }
+  }
+
+  return [...new Set(ids)];
+}
+
+export function generateCsv(rows: { name: string; bggId: number }[]): string {
+  const header = "name,bgg_id";
+  const lines = rows.map((r) => {
+    const name = r.name.includes(",") ? `"${r.name}"` : r.name;
+    return `${name},${r.bggId}`;
+  });
+  return [header, ...lines].join("\n");
+}
