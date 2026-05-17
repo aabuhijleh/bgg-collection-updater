@@ -2,6 +2,8 @@
 
 Bulk-add board games to your [BoardGameGeek](https://boardgamegeek.com) collection. Search games by name to find their BGG IDs, or paste IDs directly, then add them all to your collection in one go. Runs locally on your machine using browser automation (Playwright).
 
+https://github.com/user-attachments/assets/af0c9473-50da-4f61-9716-8f3491dbc8cd
+
 ## Prerequisites
 
 - [Bun](https://bun.sh)
