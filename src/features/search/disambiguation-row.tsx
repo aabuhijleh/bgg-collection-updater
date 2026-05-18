@@ -1,4 +1,4 @@
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, Image } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent } from "~/components/ui/card";
 import type { BggGameDetail } from "~/lib/bgg-api";
@@ -9,9 +9,6 @@ interface DisambiguationRowProps {
   onSelect: (bggId: number, name: string) => void;
   onSkip: () => void;
 }
-
-const FALLBACK_IMAGE =
-  "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/No_image_available.svg/300px-No_image_available.svg.png";
 
 export function DisambiguationRow({
   candidates,
@@ -44,12 +41,18 @@ export function DisambiguationRow({
               }}
             >
               <CardContent className="p-3">
-                <img
-                  src={game.thumbnail || FALLBACK_IMAGE}
-                  alt={game.name}
-                  className="mb-2 aspect-square w-full rounded object-cover"
-                  loading="lazy"
-                />
+                {game.thumbnail ? (
+                  <img
+                    src={game.thumbnail}
+                    alt={game.name}
+                    className="mb-2 aspect-square w-full rounded object-cover"
+                    loading="lazy"
+                  />
+                ) : (
+                  <div className="mb-2 flex aspect-square w-full items-center justify-center rounded bg-muted">
+                    <Image className="size-8 text-muted-foreground" />
+                  </div>
+                )}
                 <p className="line-clamp-2 font-medium text-sm">{game.name}</p>
                 {game.yearPublished && (
                   <p className="text-muted-foreground text-xs">
