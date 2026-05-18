@@ -12,6 +12,7 @@ import {
   CheckCircle2,
   Clock,
   Download,
+  ExternalLink,
   Loader2,
   XCircle,
 } from "lucide-react";
@@ -109,9 +110,10 @@ const columns: ColumnDef<CollectionGameEntry>[] = [
         href={`https://boardgamegeek.com/boardgame/${row.original.bggId}`}
         target="_blank"
         rel="noopener noreferrer"
-        className="text-foreground hover:underline"
+        className="inline-flex items-center gap-1 text-foreground hover:underline"
       >
         {row.original.bggId}
+        <ExternalLink className="size-3" />
       </a>
     ),
   },

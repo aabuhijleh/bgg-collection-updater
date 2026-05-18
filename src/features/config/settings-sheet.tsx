@@ -1,3 +1,4 @@
+import { useForm } from "@tanstack/react-form";
 import { EyeIcon, EyeOffIcon, Settings } from "lucide-react";
 import { useState } from "react";
 import {
@@ -12,6 +13,7 @@ import {
   AlertDialogTrigger,
 } from "~/components/ui/alert-dialog";
 import { Button } from "~/components/ui/button";
+import { Field, FieldDescription, FieldLabel } from "~/components/ui/field";
 import { Input } from "~/components/ui/input";
 import {
   InputGroup,
@@ -19,7 +21,6 @@ import {
   InputGroupButton,
   InputGroupInput,
 } from "~/components/ui/input-group";
-import { Label } from "~/components/ui/label";
 import {
   Sheet,
   SheetContent,
@@ -28,17 +29,20 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "~/components/ui/sheet";
+import { configSchema, emptyConfig } from "./config.schema";
 import { useConfig, useSaveConfig } from "./use-config";
 
 function PasswordInput({
   id,
   value,
   onChange,
+  onBlur,
   placeholder,
 }: {
   id: string;
   value: string;
   onChange: (value: string) => void;
+  onBlur?: () => void;
   placeholder: string;
 }) {
   const [visible, setVisible] = useState(false);
@@ -50,6 +54,7 @@ function PasswordInput({
         type={visible ? "text" : "password"}
         value={value}
         onChange={(e) => onChange(e.target.value)}
+        onBlur={onBlur}
         placeholder={placeholder}
       />
       <InputGroupAddon align="inline-end">
@@ -69,34 +74,32 @@ export function SettingsSheet() {
   const { data: config } = useConfig();
   const saveConfig = useSaveConfig();
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({
-    username: "",
-    password: "",
-    apiToken: "",
+
+  const form = useForm({
+    defaultValues: emptyConfig,
+    validators: {
+      onSubmit: configSchema,
+    },
+    onSubmit: async ({ value }) => {
+      saveConfig.mutate(value, {
+        onSuccess: () => setOpen(false),
+      });
+    },
   });
 
   const handleOpen = (isOpen: boolean) => {
     if (isOpen && config) {
-      setForm({
-        username: config.username,
-        password: config.password,
-        apiToken: config.apiToken,
-      });
+      form.setFieldValue("username", config.username);
+      form.setFieldValue("password", config.password);
+      form.setFieldValue("apiToken", config.apiToken);
     }
     setOpen(isOpen);
   };
 
-  const handleSave = () => {
-    saveConfig.mutate(form, {
-      onSuccess: () => setOpen(false),
-    });
-  };
-
   const handleClear = () => {
-    const empty = { username: "", password: "", apiToken: "" };
-    saveConfig.mutate(empty, {
+    saveConfig.mutate(emptyConfig, {
       onSuccess: () => {
-        setForm(empty);
+        form.reset();
         setOpen(false);
       },
     });
@@ -114,6 +117,7 @@ export function SettingsSheet() {
           {!hasConfig && (
             <span className="absolute top-1 right-1 size-2 rounded-full bg-red-500" />
           )}
+          <span className="sr-only">Settings</span>
         </Button>
       </SheetTrigger>
       <SheetContent>
@@ -132,51 +136,72 @@ export function SettingsSheet() {
             </a>
           </SheetDescription>
         </SheetHeader>
-        <div className="space-y-4 px-4">
-          <div className="space-y-2">
-            <Label htmlFor="username">BGG Username</Label>
-            <Input
-              id="username"
-              value={form.username}
-              onChange={(e) =>
-                setForm((prev) => ({ ...prev, username: e.target.value }))
-              }
-              placeholder="your-bgg-username"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="password">BGG Password</Label>
-            <PasswordInput
-              id="password"
-              value={form.password}
-              onChange={(v) => setForm((prev) => ({ ...prev, password: v }))}
-              placeholder="your-bgg-password"
-            />
-            <p className="text-muted-foreground text-xs">
-              Used to log in to BGG and add games to your collection via browser
-              automation.
-            </p>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="apiToken">XML API Token</Label>
-            <PasswordInput
-              id="apiToken"
-              value={form.apiToken}
-              onChange={(v) => setForm((prev) => ({ ...prev, apiToken: v }))}
-              placeholder="your-api-bearer-token"
-            />
-            <p className="text-muted-foreground text-xs">
-              Only needed for searching games by name. Not required if you
-              already have BGG IDs.
-            </p>
-          </div>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            form.handleSubmit();
+          }}
+          className="space-y-4 px-4"
+        >
+          <form.Field name="username">
+            {(field) => (
+              <Field>
+                <FieldLabel htmlFor={field.name}>BGG Username</FieldLabel>
+                <Input
+                  id={field.name}
+                  value={field.state.value}
+                  onBlur={field.handleBlur}
+                  onChange={(e) => field.handleChange(e.target.value)}
+                  placeholder="your-bgg-username"
+                />
+              </Field>
+            )}
+          </form.Field>
+          <form.Field name="password">
+            {(field) => (
+              <Field>
+                <FieldLabel htmlFor={field.name}>BGG Password</FieldLabel>
+                <PasswordInput
+                  id={field.name}
+                  value={field.state.value}
+                  onBlur={field.handleBlur}
+                  onChange={(v) => field.handleChange(v)}
+                  placeholder="your-bgg-password"
+                />
+                <FieldDescription>
+                  Used to log in to BGG and add games to your collection via
+                  browser automation.
+                </FieldDescription>
+              </Field>
+            )}
+          </form.Field>
+          <form.Field name="apiToken">
+            {(field) => (
+              <Field>
+                <FieldLabel htmlFor={field.name}>XML API Token</FieldLabel>
+                <PasswordInput
+                  id={field.name}
+                  value={field.state.value}
+                  onBlur={field.handleBlur}
+                  onChange={(v) => field.handleChange(v)}
+                  placeholder="your-api-bearer-token"
+                />
+                <FieldDescription>
+                  Only needed for searching games by name. Not required if you
+                  already have BGG IDs.
+                </FieldDescription>
+              </Field>
+            )}
+          </form.Field>
           <div className="flex gap-2 pt-2">
-            <Button onClick={handleSave} disabled={saveConfig.isPending}>
+            <Button type="submit" disabled={saveConfig.isPending}>
               {saveConfig.isPending ? "Saving..." : "Save"}
             </Button>
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button variant="outline">Clear</Button>
+                <Button type="button" variant="outline">
+                  Clear
+                </Button>
               </AlertDialogTrigger>
               <AlertDialogContent className="z-60">
                 <AlertDialogHeader>
@@ -195,7 +220,7 @@ export function SettingsSheet() {
               </AlertDialogContent>
             </AlertDialog>
           </div>
-        </div>
+        </form>
       </SheetContent>
     </Sheet>
   );

@@ -3,8 +3,16 @@
  */
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { InputSection } from "~/features/search/input-section";
+
+beforeAll(() => {
+  global.ResizeObserver = class {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  } as unknown as typeof ResizeObserver;
+});
 
 describe("InputSection", () => {
   afterEach(() => cleanup());

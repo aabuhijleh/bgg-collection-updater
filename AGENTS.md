@@ -1,12 +1,15 @@
 # AGENTS.md
 
-This files provides guidance to AI coding assistants working in this project.
+This files provides guidance to AI coding assistants working in this project. Read it in full before making any changes.
 
 Note: CLAUDE.md is a symlink to this file.
+
+**Self-maintaining:** After any meaningful change to the project (new conventions, architectural shifts, updated flows), update this file with concise edits to keep it accurate. Only update when applicable — not every code change warrants a doc change.
 
 ## Project Overview
 
 Local web app that bulk-adds board games to a user's BoardGameGeek collection. Two main capabilities:
+
 1. **Name-to-ID search** -- search game names against BGG XML API2 to resolve BGG IDs
 2. **Bulk collection upload** -- add games to BGG collection via Playwright browser automation
 
@@ -22,24 +25,27 @@ Single page app with four phases: Settings -> Input -> Search Results -> Add to 
 ## Critical Flows
 
 ### BGG XML API2 (Search)
+
 - Endpoint: `GET /xmlapi2/search?query={name}&type=boardgame` with `Authorization: Bearer {token}`
 - Rate limit: 750ms delay between calls. On 429: wait 30s, auto-retry.
 - Match logic: 0 results = not_found, 1 result = auto-accept, 2+ = check exact name match, otherwise ambiguous (user picks)
 - Details endpoint for disambiguation: `GET /xmlapi2/thing?id={ids}` (max 20 per request)
 
 ### Playwright Collection Upload
+
 - Login at `boardgamegeek.com/login`, handle cookie consent, fill credentials, verify title change
 - Scan existing collection pages to get owned game IDs (always done, prevents duplicates)
 - For each new game: navigate to game page, click visible "Add To Collection" button, check "Own", save
 - Progress streamed via SSE from server route to frontend
 
 ### SSE Streaming
+
 - Two SSE endpoints: `/api/search` (search results) and `/api/add-to-collection` (add progress)
 - Events: `login`, `collection-scanned`, `game-adding`, `game-added`, `game-failed`, `game-skipped`, `done`
 
 ## Project Structure
 
-```
+```text
 src/
 ├── routes/                     # TanStack Router file-based routes
 │   ├── __root.tsx              # Root layout
@@ -60,8 +66,10 @@ src/
 - React Query: custom hooks wrapping useQuery/useMutation, queryOptions helper, staleTime: Infinity for stable data
 - No useEffect unless escape hatch. No useMemo/useCallback (React Compiler handles it).
 - Zod for all validation. Biome for linting/formatting. Vitest + Testing Library for tests.
+- **Forms:** TanStack Form (`useForm`) with Zod validators and shadcn Field components (`Field`, `FieldLabel`, `FieldDescription`, `FieldError`). Use `form.Field` render props for field binding. See [shadcn TanStack Form docs](https://ui.shadcn.com/docs/forms/tanstack-form).
 - shadcn components preferred over custom. TanStack Table for all data tables.
 - **Tailwind sizing:** Use `size-x` instead of `h-x w-x` for square dimensions. Never add `className="mr-2 h-4 w-4"` or similar sizing/spacing to icons inside `<Button>` or `<TabsTrigger>` — the component handles it.
+- **Accessibility:** Icon-only buttons (`size="icon"`) must include a `<span className="sr-only">` with a descriptive label.
 
 ## Testing
 

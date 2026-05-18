@@ -1,8 +1,9 @@
+import { useForm, useStore } from "@tanstack/react-form";
 import { FileUp, Loader2, Search } from "lucide-react";
 import { useRef, useState } from "react";
 import { Button } from "~/components/ui/button";
 import { Checkbox } from "~/components/ui/checkbox";
-import { Label } from "~/components/ui/label";
+import { Field, FieldLabel } from "~/components/ui/field";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { Textarea } from "~/components/ui/textarea";
 import { parseIds, parseInput } from "~/lib/csv";
@@ -23,9 +24,25 @@ export function InputSection({
   idsWarning,
 }: InputSectionProps) {
   const [tab, setTab] = useState("names");
-  const [textValue, setTextValue] = useState("");
-  const [includeExpansions, setIncludeExpansions] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const form = useForm({
+    defaultValues: {
+      textValue: "",
+      includeExpansions: false,
+    },
+    onSubmit: ({ value }) => {
+      if (tab === "names") {
+        const names = parseInput(value.textValue);
+        if (names.length > 0) onSearchByName(names, value.includeExpansions);
+      } else {
+        const ids = parseIds(value.textValue);
+        if (ids.length > 0) onAddByIds(ids);
+      }
+    },
+  });
+
+  const textValue = useStore(form.store, (s) => s.values.textValue);
 
   const parsedNames = tab === "names" ? parseInput(textValue) : [];
   const parsedIdList = tab === "ids" ? parseIds(textValue) : [];
@@ -39,20 +56,11 @@ export function InputSection({
     reader.onload = (ev) => {
       const content = ev.target?.result;
       if (typeof content === "string") {
-        setTextValue(content);
+        form.setFieldValue("textValue", content);
       }
     };
     reader.readAsText(file);
     e.target.value = "";
-  };
-
-  const handleSubmit = () => {
-    if (!hasInput) return;
-    if (tab === "names") {
-      onSearchByName(parsedNames, includeExpansions);
-    } else {
-      if (parsedIdList.length > 0) onAddByIds(parsedIdList);
-    }
   };
 
   return (
@@ -66,92 +74,109 @@ export function InputSection({
         </p>
       </div>
 
-      <Tabs value={tab} onValueChange={setTab}>
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="names">
-            <Search />
-            Search by Name
-          </TabsTrigger>
-          <TabsTrigger value="ids">I Already Have IDs</TabsTrigger>
-        </TabsList>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          form.handleSubmit();
+        }}
+        className="space-y-4"
+      >
+        <Tabs value={tab} onValueChange={setTab}>
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="names">
+              <Search />
+              Search by Name
+            </TabsTrigger>
+            <TabsTrigger value="ids">I Already Have IDs</TabsTrigger>
+          </TabsList>
 
-        <TabsContent value="names" className="space-y-3">
-          <Textarea
-            placeholder={"Catan; Wingspan; Azul\nor one game per line"}
-            value={textValue}
-            onChange={(e) => setTextValue(e.target.value)}
-            rows={6}
-            className="resize-y font-mono text-sm"
-          />
-          <div className="flex items-center gap-2">
-            <Checkbox
-              id="expansions"
-              checked={includeExpansions}
-              onCheckedChange={(checked) =>
-                setIncludeExpansions(checked === true)
-              }
+          <TabsContent value="names" className="space-y-3">
+            <Textarea
+              placeholder={"Catan; Wingspan; Azul\nor one game per line"}
+              value={textValue}
+              onChange={(e) => form.setFieldValue("textValue", e.target.value)}
+              rows={6}
+              className="resize-y font-mono text-sm"
             />
-            <Label htmlFor="expansions" className="text-sm">
-              Include expansions in search
-            </Label>
-          </div>
-        </TabsContent>
+            <form.Field name="includeExpansions">
+              {(field) => (
+                <Field orientation="horizontal">
+                  <Checkbox
+                    id="expansions"
+                    checked={field.state.value}
+                    onCheckedChange={(checked) =>
+                      field.handleChange(checked === true)
+                    }
+                  />
+                  <FieldLabel
+                    htmlFor="expansions"
+                    className="font-normal text-sm"
+                  >
+                    Include expansions in search
+                  </FieldLabel>
+                </Field>
+              )}
+            </form.Field>
+          </TabsContent>
 
-        <TabsContent value="ids" className="space-y-3">
-          <Textarea
-            placeholder={"12345; 67890; 11111\nor one ID per line"}
-            value={textValue}
-            onChange={(e) => setTextValue(e.target.value)}
-            rows={6}
-            className="resize-y font-mono text-sm"
+          <TabsContent value="ids" className="space-y-3">
+            <Textarea
+              placeholder={"12345; 67890; 11111\nor one ID per line"}
+              value={textValue}
+              onChange={(e) => form.setFieldValue("textValue", e.target.value)}
+              rows={6}
+              className="resize-y font-mono text-sm"
+            />
+          </TabsContent>
+        </Tabs>
+
+        <div className="flex items-center gap-3">
+          <Button
+            type="submit"
+            disabled={
+              !hasInput ||
+              isSearching ||
+              !!(tab === "names" ? searchWarning : idsWarning)
+            }
+          >
+            {isSearching && <Loader2 className="animate-spin" />}
+            {tab === "names" ? "Search Games" : "Add to Collection"}
+          </Button>
+
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".csv,.txt"
+            onChange={handleFileUpload}
+            className="hidden"
           />
-        </TabsContent>
-      </Tabs>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isSearching}
+          >
+            <FileUp />
+            Upload CSV
+          </Button>
 
-      <div className="flex items-center gap-3">
-        <Button
-          onClick={handleSubmit}
-          disabled={
-            !hasInput ||
-            isSearching ||
-            !!(tab === "names" ? searchWarning : idsWarning)
-          }
-        >
-          {isSearching && <Loader2 className="animate-spin" />}
-          {tab === "names" ? "Search Games" : "Add to Collection"}
-        </Button>
+          {hasInput && (
+            <span className="text-muted-foreground text-sm">
+              {tab === "names" ? parsedNames.length : parsedIdList.length}{" "}
+              {(tab === "names" ? parsedNames.length : parsedIdList.length) ===
+              1
+                ? "item"
+                : "items"}
+            </span>
+          )}
+        </div>
 
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept=".csv,.txt"
-          onChange={handleFileUpload}
-          className="hidden"
-        />
-        <Button
-          variant="outline"
-          onClick={() => fileInputRef.current?.click()}
-          disabled={isSearching}
-        >
-          <FileUp />
-          Upload CSV
-        </Button>
-
-        {hasInput && (
-          <span className="text-muted-foreground text-sm">
-            {tab === "names" ? parsedNames.length : parsedIdList.length}{" "}
-            {(tab === "names" ? parsedNames.length : parsedIdList.length) === 1
-              ? "item"
-              : "items"}
-          </span>
+        {(tab === "names" ? searchWarning : idsWarning) && (
+          <p className="text-destructive text-sm">
+            {tab === "names" ? searchWarning : idsWarning}
+          </p>
         )}
-      </div>
-
-      {(tab === "names" ? searchWarning : idsWarning) && (
-        <p className="text-destructive text-sm">
-          {tab === "names" ? searchWarning : idsWarning}
-        </p>
-      )}
+      </form>
     </section>
   );
 }

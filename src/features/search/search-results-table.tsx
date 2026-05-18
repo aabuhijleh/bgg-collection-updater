@@ -13,6 +13,7 @@ import {
   ChevronDown,
   ChevronRight,
   Download,
+  ExternalLink,
   Loader2,
   Search,
 } from "lucide-react";
@@ -93,6 +94,7 @@ const columns: ColumnDef<SearchResultEntry>[] = [
           ) : (
             <ChevronRight className="size-4" />
           )}
+          <span className="sr-only">Toggle disambiguation options</span>
         </Button>
       );
     },
@@ -116,9 +118,10 @@ const columns: ColumnDef<SearchResultEntry>[] = [
           href={`https://boardgamegeek.com/boardgame/${row.original.bggId}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-foreground hover:underline"
+          className="inline-flex items-center gap-1 text-foreground hover:underline"
         >
           {row.original.bggId}
+          <ExternalLink className="size-3" />
         </a>
       ) : (
         "—"
