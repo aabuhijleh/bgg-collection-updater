@@ -6,11 +6,11 @@ import { Checkbox } from "~/components/ui/checkbox";
 import { Field, FieldLabel } from "~/components/ui/field";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { Textarea } from "~/components/ui/textarea";
-import { parseIds, parseInput } from "~/lib/csv";
+import { type ParsedIdEntry, parseIds, parseInput } from "~/lib/csv";
 
 interface InputSectionProps {
   onSearchByName: (names: string[], includeExpansions: boolean) => void;
-  onAddByIds: (ids: number[]) => void;
+  onAddByIds: (entries: ParsedIdEntry[]) => void;
   isSearching: boolean;
   searchWarning: string | null;
   idsWarning: string | null;
@@ -36,8 +36,8 @@ export function InputSection({
         const names = parseInput(value.textValue);
         if (names.length > 0) onSearchByName(names, value.includeExpansions);
       } else {
-        const ids = parseIds(value.textValue);
-        if (ids.length > 0) onAddByIds(ids);
+        const entries = parseIds(value.textValue);
+        if (entries.length > 0) onAddByIds(entries);
       }
     },
   });
@@ -45,9 +45,9 @@ export function InputSection({
   const textValue = useStore(form.store, (s) => s.values.textValue);
 
   const parsedNames = tab === "names" ? parseInput(textValue) : [];
-  const parsedIdList = tab === "ids" ? parseIds(textValue) : [];
+  const parsedIdEntries = tab === "ids" ? parseIds(textValue) : [];
   const hasInput =
-    tab === "names" ? parsedNames.length > 0 : parsedIdList.length > 0;
+    tab === "names" ? parsedNames.length > 0 : parsedIdEntries.length > 0;
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -117,6 +117,19 @@ export function InputSection({
                 </Field>
               )}
             </form.Field>
+            <p className="text-muted-foreground text-sm">
+              Tip: Use{" "}
+              <a
+                href="https://bgg-scan.aabuhijleh.com/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline underline-offset-4 hover:text-foreground"
+              >
+                BGG Scan
+              </a>{" "}
+              to scan board game barcodes and automatically get a list of BGG
+              IDs.
+            </p>
           </TabsContent>
 
           <TabsContent value="ids" className="space-y-3">
@@ -162,9 +175,10 @@ export function InputSection({
 
           {hasInput && (
             <span className="text-muted-foreground text-sm">
-              {tab === "names" ? parsedNames.length : parsedIdList.length}{" "}
-              {(tab === "names" ? parsedNames.length : parsedIdList.length) ===
-              1
+              {tab === "names" ? parsedNames.length : parsedIdEntries.length}{" "}
+              {(tab === "names"
+                ? parsedNames.length
+                : parsedIdEntries.length) === 1
                 ? "item"
                 : "items"}
             </span>

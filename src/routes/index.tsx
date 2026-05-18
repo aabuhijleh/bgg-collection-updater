@@ -3,6 +3,7 @@ import { AlertCircle, Dices } from "lucide-react";
 import { toast } from "sonner";
 import { ThemeToggle } from "~/components/theme-toggle";
 import { Alert, AlertDescription } from "~/components/ui/alert";
+import { Button } from "~/components/ui/button";
 import { Separator } from "~/components/ui/separator";
 import { CollectionProgress } from "~/features/collection/collection-progress";
 import { useCollectionStream } from "~/features/collection/use-collection-stream";
@@ -11,6 +12,7 @@ import { configQueryOptions, useConfig } from "~/features/config/use-config";
 import { InputSection } from "~/features/search/input-section";
 import { SearchResultsTable } from "~/features/search/search-results-table";
 import { useSearch } from "~/features/search/use-search";
+import type { ParsedIdEntry } from "~/lib/csv";
 
 export const Route = createFileRoute("/")({
   loader: ({ context }) =>
@@ -57,12 +59,16 @@ function Home() {
     search.startSearch(names, config.apiToken, includeExpansions);
   };
 
-  const handleAddByIds = (ids: number[]) => {
+  const handleAddByIds = (entries: ParsedIdEntry[]) => {
     if (!config?.username || !config?.password) {
       toast.error("Please set your BGG credentials in settings first");
       return;
     }
+    const ids = entries.map((e) => e.id);
     const nameMap = new Map<number, string>();
+    for (const e of entries) {
+      if (e.name) nameMap.set(e.id, e.name);
+    }
     collection.startAddToCollection(
       ids,
       nameMap,
@@ -119,27 +125,27 @@ function Home() {
   };
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-8">
-      <header className="mb-8 flex items-center justify-between">
-        <button
-          type="button"
-          className="flex items-center gap-3 text-left"
-          onClick={handleReset}
-        >
-          <Dices className="size-8 shrink-0" />
-          <div>
+    <div className="mx-auto flex min-h-svh max-w-5xl flex-col gap-6 px-4 py-8">
+      <header className="flex flex-col gap-1">
+        <div className="flex items-center justify-between gap-4">
+          <button
+            type="button"
+            className="flex items-center gap-3 text-left"
+            onClick={handleReset}
+          >
+            <Dices className="size-8 shrink-0" />
             <h1 className="font-bold text-3xl tracking-tight">
               BGG Collection Updater
             </h1>
-            <p className="text-muted-foreground text-sm">
-              Bulk search and add board games to your BoardGameGeek collection.
-            </p>
+          </button>
+          <div className="flex items-center gap-1">
+            <ThemeToggle />
+            <SettingsSheet />
           </div>
-        </button>
-        <div className="flex items-center gap-1">
-          <ThemeToggle />
-          <SettingsSheet />
         </div>
+        <p className="text-muted-foreground text-sm">
+          Bulk search and add board games to your BoardGameGeek collection.
+        </p>
       </header>
 
       <div className="space-y-8">
@@ -198,6 +204,22 @@ function Home() {
           </>
         )}
       </div>
+
+      <footer className="mt-auto p-2 text-center">
+        <Button
+          variant="link"
+          asChild
+          className="font-normal text-muted-foreground active:not-aria-[haspopup]:translate-y-0"
+        >
+          <a
+            href="https://github.com/aabuhijleh/bgg-collection-updater"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            View on GitHub
+          </a>
+        </Button>
+      </footer>
     </div>
   );
 }

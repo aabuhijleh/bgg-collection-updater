@@ -59,46 +59,68 @@ describe("parseInput", () => {
 });
 
 describe("parseIds", () => {
-  it("extracts IDs from CSV with header", () => {
+  it("extracts IDs and names from CSV with header", () => {
     expect(parseIds("name,bgg_id\nDecrypto,225694\nSky Team,373106")).toEqual([
-      225694, 373106,
+      { id: 225694, name: "Decrypto" },
+      { id: 373106, name: "Sky Team" },
     ]);
   });
 
-  it("extracts plain semicolon-separated IDs", () => {
-    expect(parseIds("225694; 373106; 13")).toEqual([225694, 373106, 13]);
+  it("extracts plain semicolon-separated IDs with null names", () => {
+    expect(parseIds("225694; 373106; 13")).toEqual([
+      { id: 225694, name: null },
+      { id: 373106, name: null },
+      { id: 13, name: null },
+    ]);
   });
 
-  it("extracts newline-separated IDs", () => {
-    expect(parseIds("225694\n373106")).toEqual([225694, 373106]);
+  it("extracts newline-separated IDs with null names", () => {
+    expect(parseIds("225694\n373106")).toEqual([
+      { id: 225694, name: null },
+      { id: 373106, name: null },
+    ]);
   });
 
   it("ignores non-numeric values", () => {
-    expect(parseIds("name,bgg_id\nDecrypto,225694")).toEqual([225694]);
+    expect(parseIds("name,bgg_id\nDecrypto,225694")).toEqual([
+      { id: 225694, name: "Decrypto" },
+    ]);
   });
 
   it("deduplicates IDs", () => {
-    expect(parseIds("225694; 225694; 13")).toEqual([225694, 13]);
+    expect(parseIds("225694; 225694; 13")).toEqual([
+      { id: 225694, name: null },
+      { id: 13, name: null },
+    ]);
   });
 
-  it("extracts only BGG ID column from multi-column CSV with header", () => {
+  it("extracts BGG ID and BGG Name from bgg-scan CSV", () => {
     expect(
       parseIds(
         "Barcode,Product Title,BGG ID,BGG Name,Year Published,BGG URL\n3558380020400,SKULL,92415,Skull,2011,https://boardgamegeek.com/boardgame/92415",
       ),
-    ).toEqual([92415]);
+    ).toEqual([{ id: 92415, name: "Skull" }]);
   });
 
-  it("extracts bgg_id column from search phase CSV output", () => {
+  it("extracts name and bgg_id from search results CSV", () => {
     expect(parseIds("name,bgg_id\nDecrypto,225694\nSky Team,373106")).toEqual([
-      225694, 373106,
+      { id: 225694, name: "Decrypto" },
+      { id: 373106, name: "Sky Team" },
     ]);
   });
 
   it("extracts only bgg_id column when other numeric columns exist", () => {
     expect(
       parseIds("rank,name,bgg_id,year\n1,Brass Birmingham,224517,2018"),
-    ).toEqual([224517]);
+    ).toEqual([{ id: 224517, name: "Brass Birmingham" }]);
+  });
+
+  it("falls back to Product Title when BGG Name is missing", () => {
+    expect(
+      parseIds(
+        "Barcode,Product Title,BGG ID,BGG Name,Year Published\n123,SKULL,92415,,2011",
+      ),
+    ).toEqual([{ id: 92415, name: null }]);
   });
 
   it("returns empty for empty input", () => {
