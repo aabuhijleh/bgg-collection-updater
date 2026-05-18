@@ -246,7 +246,7 @@ export function SearchResultsTable({
             onClick={handleDownloadCsv}
             disabled={foundCount === 0}
           >
-            <Download className="mr-2 h-4 w-4" />
+            <Download />
             Download CSV
           </Button>
           <Button

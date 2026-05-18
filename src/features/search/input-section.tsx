@@ -69,7 +69,7 @@ export function InputSection({
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="names">
-            <Search className="mr-2 h-4 w-4" />
+            <Search />
             Search by Name
           </TabsTrigger>
           <TabsTrigger value="ids">I Already Have IDs</TabsTrigger>
@@ -117,7 +117,7 @@ export function InputSection({
             !!(tab === "names" ? searchWarning : idsWarning)
           }
         >
-          {isSearching && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          {isSearching && <Loader2 className="animate-spin" />}
           {tab === "names" ? "Search Games" : "Add to Collection"}
         </Button>
 
@@ -133,7 +133,7 @@ export function InputSection({
           onClick={() => fileInputRef.current?.click()}
           disabled={isSearching}
         >
-          <FileUp className="mr-2 h-4 w-4" />
+          <FileUp />
           Upload CSV
         </Button>
 

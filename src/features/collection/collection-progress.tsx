@@ -260,7 +260,7 @@ export function CollectionProgress({
                 onClick={handleDownloadCsv}
                 disabled={games.length === 0}
               >
-                <Download className="mr-2 h-4 w-4" />
+                <Download />
                 Download CSV
               </Button>
               {failedCount > 0 && onRetryFailed && (
