@@ -7,8 +7,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "test": "vitest run",
-    "check": "biome check",
-    "check:react": "eslint --no-warn-ignored",
+    "check:biome": "biome check",
+    "check:eslint": "eslint --no-warn-ignored",
     "typecheck": "tsc --noEmit",
     "postinstall": "lefthook install"
   },

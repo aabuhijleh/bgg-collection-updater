@@ -10,9 +10,9 @@ pre-commit:
       glob: "*.{ts,tsx}"
       run: bun run typecheck
 
-    - name: react
+    - name: eslint
       glob: "src/**/*.{ts,tsx}"
-      run: bun run check:react
+      run: bun run check:eslint
 
     - name: tests
       glob: "src/**/*.{ts,tsx}"
