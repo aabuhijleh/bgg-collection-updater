@@ -59,3 +59,14 @@ export function generateCsv(rows: { name: string; bggId: number }[]): string {
   });
   return [header, ...lines].join("\n");
 }
+
+export function generateCollectionCsv(
+  rows: { name: string | null; bggId: number; status: string }[],
+): string {
+  const header = "name,bgg_id,status";
+  const lines = rows.map((r) => {
+    const name = r.name ? (r.name.includes(",") ? `"${r.name}"` : r.name) : "";
+    return `${name},${r.bggId},${r.status}`;
+  });
+  return [header, ...lines].join("\n");
+}

@@ -11,6 +11,7 @@ import {
   AlertCircle,
   CheckCircle2,
   Clock,
+  Download,
   Loader2,
   XCircle,
 } from "lucide-react";
@@ -35,6 +36,7 @@ import {
   TableHeader,
   TableRow,
 } from "~/components/ui/table";
+import { generateCollectionCsv } from "~/lib/csv";
 import type { CollectionGameEntry } from "./collection.types";
 
 interface CollectionProgressProps {
@@ -172,6 +174,22 @@ export function CollectionProgress({
       ? Math.round((progress.current / progress.total) * 100)
       : 0;
 
+  const handleDownloadCsv = () => {
+    const csvRows = games.map((g) => ({
+      name: g.name,
+      bggId: g.bggId,
+      status: g.status,
+    }));
+    const csv = generateCollectionCsv(csvRows);
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "bgg-collection-results.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const phaseLabel: Record<string, string> = {
     connecting: "Connecting to BGG...",
     scanning: "Scanning your existing collection...",
@@ -212,21 +230,46 @@ export function CollectionProgress({
       )}
 
       {summary && (
-        <div className="flex gap-4 text-sm">
-          <span className="text-green-600 dark:text-green-400">
-            <strong>{summary.added}</strong> added
-          </span>
-          {summary.failed > 0 && (
-            <span className="text-red-600 dark:text-red-400">
-              <strong>{summary.failed}</strong> failed
+        <div className="flex flex-wrap items-center gap-3">
+          <span className="text-sm">
+            <span className="text-green-600 dark:text-green-400">
+              <strong>{summary.added}</strong> added
             </span>
-          )}
-          <span className="text-muted-foreground">
+            {summary.failed > 0 && (
+              <>
+                {" · "}
+                <span className="text-red-600 dark:text-red-400">
+                  <strong>{summary.failed}</strong> failed
+                </span>
+              </>
+            )}
+            {" · "}
             <strong>
               {games.filter((g) => g.status === "already_owned").length}
             </strong>{" "}
             already in collection
           </span>
+          <div className="ml-auto flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleDownloadCsv}
+              disabled={games.length === 0}
+            >
+              <Download className="mr-2 h-4 w-4" />
+              Download CSV
+            </Button>
+            {summary.failed > 0 && onRetryFailed && (
+              <Button variant="outline" size="sm" onClick={onRetryFailed}>
+                Retry Failed ({summary.failed})
+              </Button>
+            )}
+            {onReset && (
+              <Button variant="outline" size="sm" onClick={onReset}>
+                Start Over
+              </Button>
+            )}
+          </div>
         </div>
       )}
 
@@ -329,21 +372,6 @@ export function CollectionProgress({
           >
             Next
           </Button>
-        </div>
-      )}
-
-      {phase === "done" && (
-        <div className="flex gap-2">
-          {summary && summary.failed > 0 && onRetryFailed && (
-            <Button variant="outline" onClick={onRetryFailed}>
-              Retry Failed ({summary.failed})
-            </Button>
-          )}
-          {onReset && (
-            <Button variant="outline" onClick={onReset}>
-              Start Over
-            </Button>
-          )}
         </div>
       )}
     </section>

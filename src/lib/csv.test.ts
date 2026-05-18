@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { generateCsv, parseIds, parseInput } from "~/lib/csv";
+import {
+  generateCollectionCsv,
+  generateCsv,
+  parseIds,
+  parseInput,
+} from "~/lib/csv";
 
 describe("parseInput", () => {
   it("parses semicolon-separated values", () => {
@@ -98,6 +103,40 @@ describe("generateCsv", () => {
     const rows = [{ name: "Catan: Seafarers, Expansion", bggId: 325 }];
     expect(generateCsv(rows)).toBe(
       'name,bgg_id\n"Catan: Seafarers, Expansion",325',
+    );
+  });
+});
+
+describe("generateCollectionCsv", () => {
+  it("generates CSV with name, bgg_id, and status columns", () => {
+    const rows = [
+      { name: "Catan", bggId: 13, status: "added" },
+      { name: "Wingspan", bggId: 266192, status: "failed" },
+    ];
+    expect(generateCollectionCsv(rows)).toBe(
+      "name,bgg_id,status\nCatan,13,added\nWingspan,266192,failed",
+    );
+  });
+
+  it("handles null names", () => {
+    const rows = [{ name: null, bggId: 13, status: "added" }];
+    expect(generateCollectionCsv(rows)).toBe("name,bgg_id,status\n,13,added");
+  });
+
+  it("handles empty array", () => {
+    expect(generateCollectionCsv([])).toBe("name,bgg_id,status");
+  });
+
+  it("escapes commas in names", () => {
+    const rows = [
+      {
+        name: "Catan: Seafarers, Expansion",
+        bggId: 325,
+        status: "already_owned",
+      },
+    ];
+    expect(generateCollectionCsv(rows)).toBe(
+      'name,bgg_id,status\n"Catan: Seafarers, Expansion",325,already_owned',
     );
   });
 });
