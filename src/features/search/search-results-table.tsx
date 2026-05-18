@@ -85,13 +85,13 @@ const columns: ColumnDef<SearchResultEntry>[] = [
         <Button
           variant="ghost"
           size="icon"
-          className="h-6 w-6"
+          className="size-6"
           onClick={() => row.toggleExpanded()}
         >
           {row.getIsExpanded() ? (
-            <ChevronDown className="h-4 w-4" />
+            <ChevronDown className="size-4" />
           ) : (
-            <ChevronRight className="h-4 w-4" />
+            <ChevronRight className="size-4" />
           )}
         </Button>
       );
@@ -132,7 +132,7 @@ const columns: ColumnDef<SearchResultEntry>[] = [
       return (
         <Badge variant={cfg?.variant ?? "outline"}>
           {row.original.status === "searching" && (
-            <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+            <Loader2 className="mr-1 size-3 animate-spin" />
           )}
           {cfg?.label ?? row.original.status}
         </Badge>
@@ -220,7 +220,7 @@ export function SearchResultsTable({
         <div className="space-y-2">
           <div className="flex items-center justify-between text-sm">
             <span className="flex items-center gap-2">
-              <Search className="h-4 w-4 animate-pulse" />
+              <Search className="size-4 animate-pulse" />
               Searching ({completedCount}/{results.length})
             </span>
             <span>{progressPercent}%</span>

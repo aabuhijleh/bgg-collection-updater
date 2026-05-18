@@ -59,32 +59,32 @@ const statusDisplay: Record<
   pending: {
     label: "Pending",
     variant: "outline",
-    icon: <Clock className="h-3 w-3" />,
+    icon: <Clock className="size-3" />,
   },
   adding: {
     label: "Adding...",
     variant: "secondary",
-    icon: <Loader2 className="h-3 w-3 animate-spin" />,
+    icon: <Loader2 className="size-3 animate-spin" />,
   },
   added: {
     label: "Added",
     variant: "success",
-    icon: <CheckCircle2 className="h-3 w-3" />,
+    icon: <CheckCircle2 className="size-3" />,
   },
   failed: {
     label: "Failed",
     variant: "destructive",
-    icon: <XCircle className="h-3 w-3" />,
+    icon: <XCircle className="size-3" />,
   },
   already_owned: {
     label: "Already in Collection",
     variant: "outline",
-    icon: <CheckCircle2 className="h-3 w-3" />,
+    icon: <CheckCircle2 className="size-3" />,
   },
   skipped: {
     label: "Skipped",
     variant: "outline",
-    icon: <Clock className="h-3 w-3" />,
+    icon: <Clock className="size-3" />,
   },
 };
 
@@ -219,7 +219,7 @@ export function CollectionProgress({
 
       {error && (
         <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
+          <AlertCircle className="size-4" />
           <AlertTitle>Error</AlertTitle>
           <AlertDescription>{error}</AlertDescription>
         </Alert>

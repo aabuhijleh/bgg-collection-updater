@@ -126,7 +126,7 @@ function Home() {
           className="flex items-center gap-3 text-left"
           onClick={handleReset}
         >
-          <Dices className="h-8 w-8 shrink-0" />
+          <Dices className="size-8 shrink-0" />
           <div>
             <h1 className="font-bold text-3xl tracking-tight">
               BGG Collection Updater
@@ -155,7 +155,7 @@ function Home() {
 
         {search.rateLimitCountdown && (
           <Alert>
-            <AlertCircle className="h-4 w-4" />
+            <AlertCircle className="size-4" />
             <AlertDescription>
               Rate limited by BGG. Retrying in{" "}
               <strong>{search.rateLimitCountdown}s</strong>...
@@ -165,7 +165,7 @@ function Home() {
 
         {search.error && (
           <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
+            <AlertCircle className="size-4" />
             <AlertDescription>{search.error}</AlertDescription>
           </Alert>
         )}

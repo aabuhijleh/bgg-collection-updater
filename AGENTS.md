@@ -61,6 +61,7 @@ src/
 - No useEffect unless escape hatch. No useMemo/useCallback (React Compiler handles it).
 - Zod for all validation. Biome for linting/formatting. Vitest + Testing Library for tests.
 - shadcn components preferred over custom. TanStack Table for all data tables.
+- **Tailwind sizing:** Use `size-x` instead of `h-x w-x` for square dimensions. Never add `className="mr-2 h-4 w-4"` or similar sizing/spacing to icons inside `<Button>` or `<TabsTrigger>` — the component handles it.
 
 ## Testing
 

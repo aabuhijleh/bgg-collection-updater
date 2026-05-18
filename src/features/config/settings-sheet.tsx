@@ -110,9 +110,9 @@ export function SettingsSheet() {
     <Sheet open={open} onOpenChange={handleOpen}>
       <SheetTrigger asChild>
         <Button variant="ghost" size="icon" className="relative">
-          <Settings className="h-5 w-5" />
+          <Settings className="size-5" />
           {!hasConfig && (
-            <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-red-500" />
+            <span className="absolute top-1 right-1 size-2 rounded-full bg-red-500" />
           )}
         </Button>
       </SheetTrigger>

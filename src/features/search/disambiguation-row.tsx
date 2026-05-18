@@ -68,7 +68,7 @@ export function DisambiguationRow({
                   className="mt-1 inline-flex items-center gap-1 text-foreground text-xs hover:underline"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  BGG <ExternalLink className="h-3 w-3" />
+                  BGG <ExternalLink className="size-3" />
                 </a>
               </CardContent>
             </Card>
