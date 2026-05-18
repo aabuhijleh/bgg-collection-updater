@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import type {
   CollectionGameEntry,
   CollectionGameStatus,
@@ -18,6 +18,7 @@ export function useCollectionStream() {
   const [phase, setPhase] = useState<CollectionPhase>("idle");
   const [progress, setProgress] = useState({ current: 0, total: 0 });
   const [error, setError] = useState<string | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   const updateGameStatus = (
     bggId: number,
@@ -47,11 +48,15 @@ export function useCollectionStream() {
     setPhase("connecting");
     setProgress({ current: 0, total: gameIds.length });
     setError(null);
+    const abortController = new AbortController();
+    abortControllerRef.current = abortController;
+
     try {
       const response = await fetch("/api/add-to-collection", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ gameIds, username, password }),
+        signal: abortController.signal,
       });
 
       if (!response.ok || !response.body) {
@@ -128,10 +133,25 @@ export function useCollectionStream() {
           }
         }
       }
-    } catch {
-      setError("Connection failed");
-      setPhase("error");
+    } catch (err) {
+      if (err instanceof DOMException && err.name === "AbortError") {
+        setGames((prev) =>
+          prev.map((g) =>
+            g.status === "pending" ? { ...g, status: "skipped" } : g,
+          ),
+        );
+        setPhase("done");
+      } else {
+        setError("Connection failed");
+        setPhase("error");
+      }
+    } finally {
+      abortControllerRef.current = null;
     }
+  };
+
+  const cancel = () => {
+    abortControllerRef.current?.abort();
   };
 
   const reset = () => {
@@ -147,6 +167,7 @@ export function useCollectionStream() {
     progress,
     error,
     startAddToCollection,
+    cancel,
     reset,
   };
 }

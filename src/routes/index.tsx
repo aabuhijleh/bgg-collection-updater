@@ -189,6 +189,7 @@ function Home() {
               phase={collection.phase}
               progress={collection.progress}
               error={collection.error}
+              onCancel={collection.cancel}
               onRetryFailed={handleRetryFailed}
               onReset={handleReset}
             />

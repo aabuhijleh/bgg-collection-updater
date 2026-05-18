@@ -18,21 +18,31 @@ export const Route = createFileRoute("/api/add-to-collection")({
           password: string;
         };
 
+        const { signal } = request;
+
         const stream = new ReadableStream({
           async start(controller) {
             const encoder = new TextEncoder();
             const send = (event: CollectionStreamEvent) => {
+              if (signal.aborted) return;
               controller.enqueue(
                 encoder.encode(`data: ${JSON.stringify(event)}\n\n`),
               );
             };
 
             let browser: Browser | undefined;
+            const onAbort = () => {
+              if (browser) browser.close().catch(() => {});
+            };
+            signal.addEventListener("abort", onAbort, { once: true });
+
             try {
               const session = await createBggSession(username, password);
               browser = session.browser;
               const page = session.page;
               send({ type: "login" });
+
+              if (signal.aborted) return;
 
               const existingIds = await getExistingCollectionIds(
                 page,
@@ -53,10 +63,14 @@ export const Route = createFileRoute("/api/add-to-collection")({
                 send({ type: "game_already_owned", bggId: id });
               }
 
+              if (signal.aborted) return;
+
               let totalAdded = 0;
               let totalFailed = 0;
 
               for (const id of newIds) {
+                if (signal.aborted) break;
+
                 send({ type: "game_adding", bggId: id });
 
                 try {
@@ -79,13 +93,16 @@ export const Route = createFileRoute("/api/add-to-collection")({
                 }
               }
 
-              send({ type: "done", totalAdded, totalFailed });
+              if (!signal.aborted) {
+                send({ type: "done", totalAdded, totalFailed });
+              }
             } catch (err) {
               send({
                 type: "login_failed",
                 message: err instanceof Error ? err.message : "Login failed",
               });
             } finally {
+              signal.removeEventListener("abort", onAbort);
               if (browser) await browser.close().catch(() => {});
               controller.close();
             }

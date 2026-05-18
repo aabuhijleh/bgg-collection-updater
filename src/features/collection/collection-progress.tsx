@@ -45,6 +45,7 @@ interface CollectionProgressProps {
   phase: string;
   progress: { current: number; total: number };
   error: string | null;
+  onCancel?: () => void;
   onRetryFailed?: () => void;
   onReset?: () => void;
 }
@@ -143,6 +144,7 @@ export function CollectionProgress({
   phase,
   progress,
   error,
+  onCancel,
   onRetryFailed,
   onReset,
 }: CollectionProgressProps) {
@@ -231,7 +233,14 @@ export function CollectionProgress({
         <div className="space-y-2">
           <div className="flex items-center justify-between text-sm">
             <span>{phaseLabel[phase] ?? phase}</span>
-            <span>{progressPercent}%</span>
+            <div className="flex items-center gap-3">
+              <span>{progressPercent}%</span>
+              {onCancel && (
+                <Button variant="outline" size="sm" onClick={onCancel}>
+                  Cancel
+                </Button>
+              )}
+            </div>
           </div>
           <Progress value={progressPercent} />
         </div>
