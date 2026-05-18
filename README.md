@@ -8,7 +8,7 @@ Bulk-add board games to your [BoardGameGeek](https://boardgamegeek.com) collecti
 
 - [Bun](https://bun.sh)
 - A BGG account
-- A BGG [XML API](https://boardgamegeek.com/using_the_xml_api)) token
+- A BGG [XML API](https://boardgamegeek.com/using_the_xml_api) token
   - [Register an application to get a token here](https://boardgamegeek.com/applications)
 
 ## Quick Start
