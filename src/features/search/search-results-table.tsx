@@ -150,20 +150,24 @@ export function SearchResultsTable({
 }: SearchResultsTableProps) {
   const [expanded, setExpanded] = useState<ExpandedState>({});
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 50 });
 
   const table = useReactTable({
     data: results,
     columns,
-    state: { expanded, columnFilters },
+    state: { expanded, columnFilters, pagination },
     onExpandedChange: setExpanded,
-    onColumnFiltersChange: setColumnFilters,
+    onColumnFiltersChange: (updater) => {
+      setColumnFilters(updater);
+      setPagination((prev) => ({ ...prev, pageIndex: 0 }));
+    },
+    onPaginationChange: setPagination,
     getRowCanExpand: (row) => row.original.status === "ambiguous",
     getCoreRowModel: getCoreRowModel(),
     getExpandedRowModel: getExpandedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     autoResetPageIndex: false,
-    initialState: { pagination: { pageSize: 50 } },
   });
 
   const searchValue =

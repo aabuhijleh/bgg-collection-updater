@@ -145,17 +145,21 @@ export function CollectionProgress({
   onReset,
 }: CollectionProgressProps) {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 50 });
 
   const table = useReactTable({
     data: games,
     columns,
-    state: { columnFilters },
-    onColumnFiltersChange: setColumnFilters,
+    state: { columnFilters, pagination },
+    onColumnFiltersChange: (updater) => {
+      setColumnFilters(updater);
+      setPagination((prev) => ({ ...prev, pageIndex: 0 }));
+    },
+    onPaginationChange: setPagination,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     autoResetPageIndex: false,
-    initialState: { pagination: { pageSize: 50 } },
   });
 
   const searchValue =

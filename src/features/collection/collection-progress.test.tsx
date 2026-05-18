@@ -228,6 +228,25 @@ describe("CollectionProgress", () => {
     });
   });
 
+  it("filters the entire dataset when searching from page 2", async () => {
+    const user = userEvent.setup();
+    const games = makeGames(120);
+    render(<CollectionProgress {...defaultProps} games={games} />);
+
+    const nextButton = screen.getByRole("button", { name: "Next" });
+    await user.click(nextButton);
+    expect(screen.getByText("Page 2 of 3")).toBeDefined();
+
+    const searchInput = screen.getByPlaceholderText("Search games...");
+    await user.type(searchInput, "Azul");
+
+    const dataRows = screen.getAllByRole("row").slice(1);
+    expect(dataRows.length).toBeGreaterThan(1);
+    for (const row of dataRows) {
+      expect(row.textContent?.toLowerCase()).toContain("azul");
+    }
+  });
+
   it("displays progress bar when adding", () => {
     const games = makeGames(10);
     render(

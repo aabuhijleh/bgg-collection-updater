@@ -283,6 +283,25 @@ describe("SearchResultsTable", () => {
     });
   });
 
+  it("filters the entire dataset when searching from page 2", async () => {
+    const user = userEvent.setup();
+    const results = makeResults(120);
+    render(<SearchResultsTable {...defaultProps} results={results} />);
+
+    const nextButton = screen.getByRole("button", { name: "Next" });
+    await user.click(nextButton);
+    expect(screen.getByText("Page 2 of 3")).toBeDefined();
+
+    const searchInput = screen.getByPlaceholderText("Search games...");
+    await user.type(searchInput, "Azul");
+
+    const dataRows = screen.getAllByRole("row").slice(1);
+    expect(dataRows.length).toBeGreaterThan(1);
+    for (const row of dataRows) {
+      expect(row.textContent?.toLowerCase()).toContain("azul");
+    }
+  });
+
   describe("search progress bar", () => {
     it("shows progress bar when isSearching is true", () => {
       const results: SearchResultEntry[] = [
