@@ -154,6 +154,7 @@ export function CollectionProgress({
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
+    autoResetPageIndex: false,
     initialState: { pagination: { pageSize: 50 } },
   });
 

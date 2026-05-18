@@ -158,6 +158,76 @@ describe("CollectionProgress", () => {
     expect(screen.getAllByRole("row").length).toBe(51);
   });
 
+  describe("pagination stability on data updates", () => {
+    it("stays on page 2 when a row status updates", async () => {
+      const user = userEvent.setup();
+      const games = makeGames(120);
+      const { rerender } = render(
+        <CollectionProgress
+          games={games}
+          phase="adding"
+          progress={{ current: 5, total: 120 }}
+          error={null}
+          summary={null}
+        />,
+      );
+
+      const nextButton = screen.getByRole("button", { name: "Next" });
+      await user.click(nextButton);
+      expect(screen.getByText("Page 2 of 3")).toBeDefined();
+
+      const updated = games.map((g, i) =>
+        i === 60 ? { ...g, status: "added" as const } : g,
+      );
+      rerender(
+        <CollectionProgress
+          games={updated}
+          phase="adding"
+          progress={{ current: 6, total: 120 }}
+          error={null}
+          summary={null}
+        />,
+      );
+
+      expect(screen.getByText("Page 2 of 3")).toBeDefined();
+    });
+
+    it("stays on page 2 across multiple rapid status updates", async () => {
+      const user = userEvent.setup();
+      const games = makeGames(120);
+      const { rerender } = render(
+        <CollectionProgress
+          games={games}
+          phase="adding"
+          progress={{ current: 0, total: 120 }}
+          error={null}
+          summary={null}
+        />,
+      );
+
+      const nextButton = screen.getByRole("button", { name: "Next" });
+      await user.click(nextButton);
+      expect(screen.getByText("Page 2 of 3")).toBeDefined();
+
+      for (let update = 0; update < 5; update++) {
+        const updated = games.map((g, i) =>
+          i === update ? { ...g, status: "added" as const } : g,
+        );
+        rerender(
+          <CollectionProgress
+            games={updated}
+            phase="adding"
+            progress={{ current: update + 1, total: 120 }}
+            error={null}
+            summary={null}
+          />,
+        );
+      }
+
+      expect(screen.getByText("Page 2 of 3")).toBeDefined();
+    });
+  });
+
   it("displays progress bar when adding", () => {
     const games = makeGames(10);
     render(

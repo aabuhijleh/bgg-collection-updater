@@ -9,11 +9,18 @@ import {
   getPaginationRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { ChevronDown, ChevronRight, Download, Loader2 } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronRight,
+  Download,
+  Loader2,
+  Search,
+} from "lucide-react";
 import { Fragment, useState } from "react";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
+import { Progress } from "~/components/ui/progress";
 import {
   Select,
   SelectContent,
@@ -155,6 +162,7 @@ export function SearchResultsTable({
     getExpandedRowModel: getExpandedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
+    autoResetPageIndex: false,
     initialState: { pagination: { pageSize: 50 } },
   });
 
@@ -166,6 +174,14 @@ export function SearchResultsTable({
   const foundCount = results.filter((r) => r.status === "found").length;
   const notFoundCount = results.filter((r) => r.status === "not_found").length;
   const ambiguousCount = results.filter((r) => r.status === "ambiguous").length;
+
+  const completedCount = results.filter(
+    (r) => r.status !== "pending" && r.status !== "searching",
+  ).length;
+  const progressPercent =
+    results.length > 0
+      ? Math.round((completedCount / results.length) * 100)
+      : 0;
 
   const handleDownloadCsv = () => {
     const csvRows = results
@@ -195,6 +211,19 @@ export function SearchResultsTable({
           collection.
         </p>
       </div>
+
+      {isSearching && (
+        <div className="space-y-2">
+          <div className="flex items-center justify-between text-sm">
+            <span className="flex items-center gap-2">
+              <Search className="h-4 w-4 animate-pulse" />
+              Searching ({completedCount}/{results.length})
+            </span>
+            <span>{progressPercent}%</span>
+          </div>
+          <Progress value={progressPercent} />
+        </div>
+      )}
 
       <div className="flex flex-wrap items-center gap-3">
         <span className="text-sm">
