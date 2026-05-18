@@ -29,6 +29,27 @@ Sample input files are in the `examples/` directory:
 
 Upload these via the "Upload CSV" button or copy-paste the contents.
 
+## Data Storage
+
+Your BGG credentials (username, password, API token) are stored locally in a JSON file in your home directory. Nothing is sent to any server other than BGG itself.
+
+| OS              | Path                                          |
+| --------------- | --------------------------------------------- |
+| macOS and Linux | `~/.bgg-collection-updater.json`              |
+| Windows         | `C:\Users\<you>\.bgg-collection-updater.json` |
+
+The file contains:
+
+```json
+{
+  "username": "your-bgg-username",
+  "password": "your-bgg-password",
+  "apiToken": "your-bgg-api-token"
+}
+```
+
+No other data is persisted to disk. Search results and collection state exist only in the browser while the app is running.
+
 ## How It Works
 
 1. **Enter games** -- paste names (semicolon, newline, or comma separated) or upload a CSV. If you already have BGG IDs, switch to the "I Already Have IDs" tab.

@@ -55,6 +55,7 @@ src/
 
 ## Conventions
 
+- **Always use `bun` and `bunx`.** Never use `npm`, `npx`, `yarn`, `pnpm`, or any other package manager/runner.
 - Feature folders are self-contained: `*.server.ts` (server functions), `use-*.ts` (hooks), `*.tsx` (UI)
 - React Query: custom hooks wrapping useQuery/useMutation, queryOptions helper, staleTime: Infinity for stable data
 - No useEffect unless escape hatch. No useMemo/useCallback (React Compiler handles it).
