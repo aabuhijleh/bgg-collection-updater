@@ -16,7 +16,7 @@ Bulk-add board games to your [BoardGameGeek](https://boardgamegeek.com) collecti
 
 ```bash
 bun install
-bun dev
+bun start
 ```
 
 Open `http://localhost:3000`. Click the gear icon to enter your BGG username, password, and API token.
