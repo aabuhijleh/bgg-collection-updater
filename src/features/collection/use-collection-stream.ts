@@ -18,10 +18,6 @@ export function useCollectionStream() {
   const [phase, setPhase] = useState<CollectionPhase>("idle");
   const [progress, setProgress] = useState({ current: 0, total: 0 });
   const [error, setError] = useState<string | null>(null);
-  const [summary, setSummary] = useState<{
-    added: number;
-    failed: number;
-  } | null>(null);
 
   const updateGameStatus = (
     bggId: number,
@@ -51,8 +47,6 @@ export function useCollectionStream() {
     setPhase("connecting");
     setProgress({ current: 0, total: gameIds.length });
     setError(null);
-    setSummary(null);
-
     try {
       const response = await fetch("/api/add-to-collection", {
         method: "POST",
@@ -122,10 +116,6 @@ export function useCollectionStream() {
                 }
                 break;
               case "done":
-                setSummary({
-                  added: event.totalAdded ?? 0,
-                  failed: event.totalFailed ?? 0,
-                });
                 setPhase("done");
                 break;
               case "error":
@@ -149,7 +139,6 @@ export function useCollectionStream() {
     setPhase("idle");
     setProgress({ current: 0, total: 0 });
     setError(null);
-    setSummary(null);
   };
 
   return {
@@ -157,7 +146,6 @@ export function useCollectionStream() {
     phase,
     progress,
     error,
-    summary,
     startAddToCollection,
     reset,
   };

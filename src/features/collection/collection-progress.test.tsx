@@ -81,7 +81,6 @@ describe("CollectionProgress", () => {
     phase: "done",
     progress: { current: 0, total: 0 },
     error: null,
-    summary: null,
   };
 
   it("renders without crashing with 200 entries", () => {
@@ -168,7 +167,6 @@ describe("CollectionProgress", () => {
           phase="adding"
           progress={{ current: 5, total: 120 }}
           error={null}
-          summary={null}
         />,
       );
 
@@ -185,7 +183,6 @@ describe("CollectionProgress", () => {
           phase="adding"
           progress={{ current: 6, total: 120 }}
           error={null}
-          summary={null}
         />,
       );
 
@@ -201,7 +198,6 @@ describe("CollectionProgress", () => {
           phase="adding"
           progress={{ current: 0, total: 120 }}
           error={null}
-          summary={null}
         />,
       );
 
@@ -219,7 +215,6 @@ describe("CollectionProgress", () => {
             phase="adding"
             progress={{ current: update + 1, total: 120 }}
             error={null}
-            summary={null}
           />,
         );
       }
@@ -255,10 +250,107 @@ describe("CollectionProgress", () => {
         phase="adding"
         progress={{ current: 5, total: 10 }}
         error={null}
-        summary={null}
       />,
     );
     expect(screen.getByText("Adding games (5/10)")).toBeDefined();
     expect(screen.getByText("50%")).toBeDefined();
+  });
+
+  describe("live summary counts", () => {
+    it("shows summary counts while still adding", () => {
+      const games: CollectionGameEntry[] = [
+        { bggId: 100, name: "Catan", status: "added" },
+        { bggId: 200, name: "Wingspan", status: "added" },
+        { bggId: 300, name: "Azul", status: "already_owned" },
+        { bggId: 400, name: "Root", status: "pending" },
+        { bggId: 500, name: "Brass", status: "adding" },
+      ];
+      render(
+        <CollectionProgress
+          games={games}
+          phase="adding"
+          progress={{ current: 3, total: 5 }}
+          error={null}
+        />,
+      );
+      const summaryText = screen
+        .getByText(/added/)
+        .closest("span")?.textContent;
+      expect(summaryText).toContain("2");
+      expect(summaryText).toContain("added");
+      expect(screen.getByText(/already in collection/)).toBeDefined();
+    });
+
+    it("shows failed count when games fail during adding", () => {
+      const games: CollectionGameEntry[] = [
+        { bggId: 1, name: "Catan", status: "added" },
+        { bggId: 2, name: "Wingspan", status: "failed" },
+        { bggId: 3, name: "Root", status: "pending" },
+      ];
+      render(
+        <CollectionProgress
+          games={games}
+          phase="adding"
+          progress={{ current: 2, total: 3 }}
+          error={null}
+        />,
+      );
+      expect(screen.getByText(/failed/)).toBeDefined();
+    });
+
+    it("does not show summary when no games have completed", () => {
+      const games: CollectionGameEntry[] = [
+        { bggId: 1, name: "Catan", status: "pending" },
+        { bggId: 2, name: "Wingspan", status: "pending" },
+      ];
+      render(
+        <CollectionProgress
+          games={games}
+          phase="adding"
+          progress={{ current: 0, total: 2 }}
+          error={null}
+        />,
+      );
+      expect(screen.queryByText(/added/)).toBeNull();
+      expect(screen.queryByText(/already in collection/)).toBeNull();
+    });
+
+    it("hides action buttons while still adding", () => {
+      const games: CollectionGameEntry[] = [
+        { bggId: 1, name: "Catan", status: "added" },
+        { bggId: 2, name: "Wingspan", status: "pending" },
+      ];
+      render(
+        <CollectionProgress
+          games={games}
+          phase="adding"
+          progress={{ current: 1, total: 2 }}
+          error={null}
+          onReset={() => {}}
+        />,
+      );
+      expect(screen.queryByText("Download CSV")).toBeNull();
+      expect(screen.queryByText("Start Over")).toBeNull();
+    });
+
+    it("shows action buttons when phase is done", () => {
+      const games: CollectionGameEntry[] = [
+        { bggId: 1, name: "Catan", status: "added" },
+        { bggId: 2, name: "Wingspan", status: "failed" },
+      ];
+      render(
+        <CollectionProgress
+          games={games}
+          phase="done"
+          progress={{ current: 2, total: 2 }}
+          error={null}
+          onRetryFailed={() => {}}
+          onReset={() => {}}
+        />,
+      );
+      expect(screen.getByText("Download CSV")).toBeDefined();
+      expect(screen.getByText("Start Over")).toBeDefined();
+      expect(screen.getByText("Retry Failed (1)")).toBeDefined();
+    });
   });
 });

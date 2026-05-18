@@ -133,7 +133,7 @@ function Home() {
       </header>
 
       <div className="space-y-8">
-        {(phase === "input" || phase === "search_results") && (
+        {phase === "input" && (
           <InputSection
             onSearchByName={handleSearchByName}
             onAddByIds={handleAddByIds}
@@ -181,7 +181,6 @@ function Home() {
               phase={collection.phase}
               progress={collection.progress}
               error={collection.error}
-              summary={collection.summary}
               onRetryFailed={handleRetryFailed}
               onReset={handleReset}
             />

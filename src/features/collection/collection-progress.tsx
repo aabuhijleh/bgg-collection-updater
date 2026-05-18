@@ -44,7 +44,6 @@ interface CollectionProgressProps {
   phase: string;
   progress: { current: number; total: number };
   error: string | null;
-  summary: { added: number; failed: number } | null;
   onRetryFailed?: () => void;
   onReset?: () => void;
 }
@@ -142,7 +141,6 @@ export function CollectionProgress({
   phase,
   progress,
   error,
-  summary,
   onRetryFailed,
   onReset,
 }: CollectionProgressProps) {
@@ -168,6 +166,14 @@ export function CollectionProgress({
     (table.getColumn("name")?.getFilterValue() as string) ?? "";
   const statusValue =
     (table.getColumn("status")?.getFilterValue() as string) ?? "all";
+
+  const addedCount = games.filter((g) => g.status === "added").length;
+  const failedCount = games.filter((g) => g.status === "failed").length;
+  const alreadyOwnedCount = games.filter(
+    (g) => g.status === "already_owned",
+  ).length;
+  const showSummary =
+    addedCount > 0 || failedCount > 0 || alreadyOwnedCount > 0;
 
   const progressPercent =
     progress.total > 0
@@ -229,47 +235,46 @@ export function CollectionProgress({
         </div>
       )}
 
-      {summary && (
+      {showSummary && (
         <div className="flex flex-wrap items-center gap-3">
           <span className="text-sm">
             <span className="text-green-600 dark:text-green-400">
-              <strong>{summary.added}</strong> added
+              <strong>{addedCount}</strong> added
             </span>
-            {summary.failed > 0 && (
+            {failedCount > 0 && (
               <>
                 {" · "}
                 <span className="text-red-600 dark:text-red-400">
-                  <strong>{summary.failed}</strong> failed
+                  <strong>{failedCount}</strong> failed
                 </span>
               </>
             )}
             {" · "}
-            <strong>
-              {games.filter((g) => g.status === "already_owned").length}
-            </strong>{" "}
-            already in collection
+            <strong>{alreadyOwnedCount}</strong> already in collection
           </span>
-          <div className="ml-auto flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleDownloadCsv}
-              disabled={games.length === 0}
-            >
-              <Download className="mr-2 h-4 w-4" />
-              Download CSV
-            </Button>
-            {summary.failed > 0 && onRetryFailed && (
-              <Button variant="outline" size="sm" onClick={onRetryFailed}>
-                Retry Failed ({summary.failed})
+          {phase === "done" && (
+            <div className="ml-auto flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleDownloadCsv}
+                disabled={games.length === 0}
+              >
+                <Download className="mr-2 h-4 w-4" />
+                Download CSV
               </Button>
-            )}
-            {onReset && (
-              <Button variant="outline" size="sm" onClick={onReset}>
-                Start Over
-              </Button>
-            )}
-          </div>
+              {failedCount > 0 && onRetryFailed && (
+                <Button variant="outline" size="sm" onClick={onRetryFailed}>
+                  Retry Failed ({failedCount})
+                </Button>
+              )}
+              {onReset && (
+                <Button variant="outline" size="sm" onClick={onReset}>
+                  Start Over
+                </Button>
+              )}
+            </div>
+          )}
         </div>
       )}
 
