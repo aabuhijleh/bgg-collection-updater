@@ -1,16 +1,26 @@
 import {
   type ColumnDef,
+  type ColumnFiltersState,
   type ExpandedState,
   flexRender,
   getCoreRowModel,
   getExpandedRowModel,
+  getFilteredRowModel,
   getPaginationRowModel,
   useReactTable,
 } from "@tanstack/react-table";
 import { ChevronDown, ChevronRight, Download, Loader2 } from "lucide-react";
-import { Fragment, useState } from "react";
+import { Fragment, useDeferredValue, useState } from "react";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
+import { Input } from "~/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "~/components/ui/select";
 import {
   Table,
   TableBody,
@@ -54,6 +64,9 @@ export function SearchResultsTable({
   isSearching,
 }: SearchResultsTableProps) {
   const [expanded, setExpanded] = useState<ExpandedState>({});
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const deferredSearch = useDeferredValue(searchQuery);
 
   const columns: ColumnDef<SearchResultEntry>[] = [
     {
@@ -80,6 +93,13 @@ export function SearchResultsTable({
     {
       accessorKey: "inputName",
       header: "Name",
+      filterFn: (row, _columnId, filterValue: string) => {
+        const query = filterValue.toLowerCase();
+        return (
+          row.original.inputName.toLowerCase().includes(query) ||
+          (row.original.matchedName?.toLowerCase().includes(query) ?? false)
+        );
+      },
     },
     {
       accessorKey: "matchedName",
@@ -123,14 +143,23 @@ export function SearchResultsTable({
   const table = useReactTable({
     data: results,
     columns,
-    state: { expanded },
+    state: { expanded, columnFilters },
     onExpandedChange: setExpanded,
+    onColumnFiltersChange: setColumnFilters,
     getRowCanExpand: (row) => row.original.status === "ambiguous",
     getCoreRowModel: getCoreRowModel(),
     getExpandedRowModel: getExpandedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     initialState: { pagination: { pageSize: 50 } },
   });
+
+  const statusFilter =
+    (table.getColumn("status")?.getFilterValue() as string) ?? "all";
+
+  if (table.getColumn("inputName")?.getFilterValue() !== deferredSearch) {
+    table.getColumn("inputName")?.setFilterValue(deferredSearch || undefined);
+  }
 
   const foundCount = results.filter((r) => r.status === "found").length;
   const notFoundCount = results.filter((r) => r.status === "not_found").length;
@@ -193,6 +222,34 @@ export function SearchResultsTable({
             Add to Collection ({foundCount})
           </Button>
         </div>
+      </div>
+
+      <div className="flex items-center gap-2">
+        <Input
+          placeholder="Search games..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="max-w-xs"
+        />
+        <Select
+          value={statusFilter}
+          onValueChange={(value) =>
+            table
+              .getColumn("status")
+              ?.setFilterValue(value === "all" ? undefined : value)
+          }
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="All statuses" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All statuses</SelectItem>
+            <SelectItem value="found">Found</SelectItem>
+            <SelectItem value="ambiguous">Ambiguous</SelectItem>
+            <SelectItem value="not_found">Not Found</SelectItem>
+            <SelectItem value="skipped">Skipped</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="rounded-md border">

@@ -1,7 +1,9 @@
 import {
   type ColumnDef,
+  type ColumnFiltersState,
   flexRender,
   getCoreRowModel,
+  getFilteredRowModel,
   getPaginationRowModel,
   useReactTable,
 } from "@tanstack/react-table";
@@ -12,10 +14,19 @@ import {
   Loader2,
   XCircle,
 } from "lucide-react";
+import { useDeferredValue, useState } from "react";
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
+import { Input } from "~/components/ui/input";
 import { Progress } from "~/components/ui/progress";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "~/components/ui/select";
 import {
   Table,
   TableBody,
@@ -95,6 +106,13 @@ const columns: ColumnDef<CollectionGameEntry>[] = [
     accessorKey: "name",
     header: "Game",
     cell: ({ row }) => row.original.name ?? "—",
+    filterFn: (row, _columnId, filterValue: string) => {
+      const query = filterValue.toLowerCase();
+      return (
+        (row.original.name?.toLowerCase().includes(query) ?? false) ||
+        String(row.original.bggId).includes(query)
+      );
+    },
   },
   {
     accessorKey: "status",
@@ -120,13 +138,27 @@ export function CollectionProgress({
   onRetryFailed,
   onReset,
 }: CollectionProgressProps) {
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const deferredSearch = useDeferredValue(searchQuery);
+
   const table = useReactTable({
     data: games,
     columns,
+    state: { columnFilters },
+    onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     initialState: { pagination: { pageSize: 50 } },
   });
+
+  const statusFilter =
+    (table.getColumn("status")?.getFilterValue() as string) ?? "all";
+
+  if (table.getColumn("name")?.getFilterValue() !== deferredSearch) {
+    table.getColumn("name")?.setFilterValue(deferredSearch || undefined);
+  }
 
   const progressPercent =
     progress.total > 0
@@ -150,7 +182,7 @@ export function CollectionProgress({
         <p className="text-muted-foreground text-sm">
           {phase === "done"
             ? "Here's what happened."
-            : "Logging into BGG and adding games. This runs a browser in the background."}
+            : "Logging into BGG and adding games in a browser window."}
         </p>
       </div>
 
@@ -191,6 +223,35 @@ export function CollectionProgress({
         </div>
       )}
 
+      <div className="flex items-center gap-2">
+        <Input
+          placeholder="Search games..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="max-w-xs"
+        />
+        <Select
+          value={statusFilter}
+          onValueChange={(value) =>
+            table
+              .getColumn("status")
+              ?.setFilterValue(value === "all" ? undefined : value)
+          }
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="All statuses" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All statuses</SelectItem>
+            <SelectItem value="added">Added</SelectItem>
+            <SelectItem value="failed">Failed</SelectItem>
+            <SelectItem value="already_owned">Already in Collection</SelectItem>
+            <SelectItem value="pending">Pending</SelectItem>
+            <SelectItem value="skipped">Skipped</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
       <div className="rounded-md border">
         <Table>
           <TableHeader>
@@ -210,15 +271,29 @@ export function CollectionProgress({
             ))}
           </TableHeader>
           <TableBody>
-            {table.getRowModel().rows.map((row) => (
-              <TableRow key={row.id}>
-                {row.getVisibleCells().map((cell) => (
-                  <TableCell key={cell.id}>
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </TableCell>
-                ))}
+            {table.getRowModel().rows.length === 0 ? (
+              <TableRow>
+                <TableCell
+                  colSpan={columns.length}
+                  className="h-24 text-center"
+                >
+                  No results.
+                </TableCell>
               </TableRow>
-            ))}
+            ) : (
+              table.getRowModel().rows.map((row) => (
+                <TableRow key={row.id}>
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell key={cell.id}>
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext(),
+                      )}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
       </div>
