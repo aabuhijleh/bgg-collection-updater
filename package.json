@@ -2,9 +2,6 @@
   "name": "bgg-collection-updater",
   "private": true,
   "type": "module",
-  "imports": {
-    "#/*": "./src/*"
-  },
   "scripts": {
     "dev": "vite dev --port 3000",
     "build": "vite build",
@@ -75,10 +72,5 @@
     "vite": "^8.0.13",
     "vitest": "^4.1.6"
   },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "esbuild",
-      "lightningcss"
-    ]
-  }
+  "packageManager": "bun@1.3.14"
 }
