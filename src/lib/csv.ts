@@ -32,7 +32,14 @@ export function parseIds(raw: string): number[] {
     .map((l) => l.trim())
     .filter(Boolean);
 
-  const hasHeader = lines.length > 0 && /bgg_id|bggid|id/i.test(lines[0]);
+  const headerColumns =
+    lines.length > 0
+      ? lines[0].split(/[,;]/).map((c) => c.trim().replace(/^["']|["']$/g, ""))
+      : [];
+  const idColumnIndex = headerColumns.findIndex((c) => /^bgg[_ ]?id$/i.test(c));
+  const hasHeader =
+    idColumnIndex !== -1 ||
+    (lines.length > 0 && /bgg_id|bggid|id/i.test(lines[0]));
   const dataLines = hasHeader ? lines.slice(1) : lines;
 
   const ids: number[] = [];
@@ -40,10 +47,20 @@ export function parseIds(raw: string): number[] {
     const parts = line
       .split(/[,;]/)
       .map((p) => p.trim().replace(/^["']|["']$/g, ""));
-    for (const part of parts) {
-      const num = Number(part);
-      if (!Number.isNaN(num) && num > 0 && Number.isInteger(num)) {
-        ids.push(num);
+    if (idColumnIndex !== -1) {
+      const val = parts[idColumnIndex];
+      if (val) {
+        const num = Number(val);
+        if (!Number.isNaN(num) && num > 0 && Number.isInteger(num)) {
+          ids.push(num);
+        }
+      }
+    } else {
+      for (const part of parts) {
+        const num = Number(part);
+        if (!Number.isNaN(num) && num > 0 && Number.isInteger(num)) {
+          ids.push(num);
+        }
       }
     }
   }

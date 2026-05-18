@@ -81,6 +81,26 @@ describe("parseIds", () => {
     expect(parseIds("225694; 225694; 13")).toEqual([225694, 13]);
   });
 
+  it("extracts only BGG ID column from multi-column CSV with header", () => {
+    expect(
+      parseIds(
+        "Barcode,Product Title,BGG ID,BGG Name,Year Published,BGG URL\n3558380020400,SKULL,92415,Skull,2011,https://boardgamegeek.com/boardgame/92415",
+      ),
+    ).toEqual([92415]);
+  });
+
+  it("extracts bgg_id column from search phase CSV output", () => {
+    expect(parseIds("name,bgg_id\nDecrypto,225694\nSky Team,373106")).toEqual([
+      225694, 373106,
+    ]);
+  });
+
+  it("extracts only bgg_id column when other numeric columns exist", () => {
+    expect(
+      parseIds("rank,name,bgg_id,year\n1,Brass Birmingham,224517,2018"),
+    ).toEqual([224517]);
+  });
+
   it("returns empty for empty input", () => {
     expect(parseIds("")).toEqual([]);
   });
