@@ -138,27 +138,24 @@ export function CollectionProgress({
   onRetryFailed,
   onReset,
 }: CollectionProgressProps) {
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const deferredSearch = useDeferredValue(searchQuery);
+  const [statusFilter, setStatusFilter] = useState("all");
+
+  const columnFilters: ColumnFiltersState = [
+    ...(deferredSearch ? [{ id: "name", value: deferredSearch }] : []),
+    ...(statusFilter !== "all" ? [{ id: "status", value: statusFilter }] : []),
+  ];
 
   const table = useReactTable({
     data: games,
     columns,
     state: { columnFilters },
-    onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     initialState: { pagination: { pageSize: 50 } },
   });
-
-  const statusFilter =
-    (table.getColumn("status")?.getFilterValue() as string) ?? "all";
-
-  if (table.getColumn("name")?.getFilterValue() !== deferredSearch) {
-    table.getColumn("name")?.setFilterValue(deferredSearch || undefined);
-  }
 
   const progressPercent =
     progress.total > 0
@@ -230,14 +227,7 @@ export function CollectionProgress({
           onChange={(e) => setSearchQuery(e.target.value)}
           className="max-w-xs"
         />
-        <Select
-          value={statusFilter}
-          onValueChange={(value) =>
-            table
-              .getColumn("status")
-              ?.setFilterValue(value === "all" ? undefined : value)
-          }
-        >
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger>
             <SelectValue placeholder="All statuses" />
           </SelectTrigger>

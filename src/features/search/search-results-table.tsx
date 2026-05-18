@@ -64,9 +64,14 @@ export function SearchResultsTable({
   isSearching,
 }: SearchResultsTableProps) {
   const [expanded, setExpanded] = useState<ExpandedState>({});
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const deferredSearch = useDeferredValue(searchQuery);
+  const [statusFilter, setStatusFilter] = useState("all");
+
+  const columnFilters: ColumnFiltersState = [
+    ...(deferredSearch ? [{ id: "inputName", value: deferredSearch }] : []),
+    ...(statusFilter !== "all" ? [{ id: "status", value: statusFilter }] : []),
+  ];
 
   const columns: ColumnDef<SearchResultEntry>[] = [
     {
@@ -145,7 +150,6 @@ export function SearchResultsTable({
     columns,
     state: { expanded, columnFilters },
     onExpandedChange: setExpanded,
-    onColumnFiltersChange: setColumnFilters,
     getRowCanExpand: (row) => row.original.status === "ambiguous",
     getCoreRowModel: getCoreRowModel(),
     getExpandedRowModel: getExpandedRowModel(),
@@ -153,13 +157,6 @@ export function SearchResultsTable({
     getPaginationRowModel: getPaginationRowModel(),
     initialState: { pagination: { pageSize: 50 } },
   });
-
-  const statusFilter =
-    (table.getColumn("status")?.getFilterValue() as string) ?? "all";
-
-  if (table.getColumn("inputName")?.getFilterValue() !== deferredSearch) {
-    table.getColumn("inputName")?.setFilterValue(deferredSearch || undefined);
-  }
 
   const foundCount = results.filter((r) => r.status === "found").length;
   const notFoundCount = results.filter((r) => r.status === "not_found").length;
@@ -231,14 +228,7 @@ export function SearchResultsTable({
           onChange={(e) => setSearchQuery(e.target.value)}
           className="max-w-xs"
         />
-        <Select
-          value={statusFilter}
-          onValueChange={(value) =>
-            table
-              .getColumn("status")
-              ?.setFilterValue(value === "all" ? undefined : value)
-          }
-        >
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger>
             <SelectValue placeholder="All statuses" />
           </SelectTrigger>
