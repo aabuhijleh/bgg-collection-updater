@@ -8,8 +8,9 @@ Bulk-add board games to your [BoardGameGeek](https://boardgamegeek.com) collecti
 
 - [Bun](https://bun.sh)
 - A BGG account
-- A BGG [XML API](https://boardgamegeek.com/using_the_xml_api) token
+- A BGG [XML API](https://boardgamegeek.com/using_the_xml_api) token (only needed for searching games by name)
   - [Register an application to get a token here](https://boardgamegeek.com/applications)
+  - Not required if you already have BGG IDs and just want to add them to your collection
 
 ## Quick Start
 
@@ -53,8 +54,8 @@ No other data is persisted to disk. Search results and collection state exist on
 ## How It Works
 
 1. **Enter games** -- paste names (semicolon, newline, or comma separated) or upload a CSV. If you already have BGG IDs, switch to the "I Already Have IDs" tab.
-2. **Review search results** -- the app searches the BGG API for each name. Ambiguous matches expand inline so you can pick the right game. Download results as CSV.
-3. **Add to collection** -- the app launches a headless browser, logs into BGG with your credentials, checks what you already own, and adds the new games. Progress streams in real time.
+2. **Review search results** -- the app searches the BGG XML API for each name (requires an API token). Ambiguous matches expand inline so you can pick the right game. Download results as CSV.
+3. **Add to collection** -- the app launches a headless browser, logs into BGG with your username and password, checks what you already own, and adds the new games. No API token needed for this step. Progress streams in real time.
 
 ## Credits
 

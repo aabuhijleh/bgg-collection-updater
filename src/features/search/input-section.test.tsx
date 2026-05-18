@@ -13,7 +13,8 @@ describe("InputSection", () => {
     onSearchByName: vi.fn(),
     onAddByIds: vi.fn(),
     isSearching: false,
-    hasConfig: true,
+    searchWarning: null as string | null,
+    idsWarning: null as string | null,
   };
 
   it("renders two tabs", () => {
@@ -46,5 +47,67 @@ describe("InputSection", () => {
     render(<InputSection {...defaultProps} />);
     const button = screen.getByRole("button", { name: /search games/i });
     expect((button as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  it("disables search button and shows warning when searchWarning is set", async () => {
+    const user = userEvent.setup();
+    render(
+      <InputSection
+        {...defaultProps}
+        searchWarning="Set your XML API token in settings to search by name."
+      />,
+    );
+    const textarea = screen.getByRole("textbox");
+    await user.type(textarea, "Catan");
+    const button = screen.getByRole("button", { name: /search games/i });
+    expect((button as HTMLButtonElement).disabled).toBe(true);
+    expect(screen.getByText(/set your xml api token/i)).toBeDefined();
+  });
+
+  it("disables add button and shows warning when idsWarning is set on ids tab", async () => {
+    const user = userEvent.setup();
+    render(
+      <InputSection
+        {...defaultProps}
+        idsWarning="Set your BGG username and password in settings to add games."
+      />,
+    );
+    await user.click(screen.getByRole("tab", { name: /i already have ids/i }));
+    const textarea = screen.getByRole("textbox");
+    await user.type(textarea, "12345");
+    const button = screen.getByRole("button", { name: /add to collection/i });
+    expect((button as HTMLButtonElement).disabled).toBe(true);
+    expect(screen.getByText(/set your bgg username/i)).toBeDefined();
+  });
+
+  it("does not show searchWarning on the ids tab", async () => {
+    const user = userEvent.setup();
+    render(
+      <InputSection
+        {...defaultProps}
+        searchWarning="Set your XML API token in settings to search by name."
+      />,
+    );
+    await user.click(screen.getByRole("tab", { name: /i already have ids/i }));
+    expect(screen.queryByText(/set your xml api token/i)).toBeNull();
+  });
+
+  it("does not show idsWarning on the names tab", () => {
+    render(
+      <InputSection
+        {...defaultProps}
+        idsWarning="Set your BGG username and password in settings to add games."
+      />,
+    );
+    expect(screen.queryByText(/set your bgg username/i)).toBeNull();
+  });
+
+  it("enables search button when searchWarning is null and input exists", async () => {
+    const user = userEvent.setup();
+    render(<InputSection {...defaultProps} searchWarning={null} />);
+    const textarea = screen.getByRole("textbox");
+    await user.type(textarea, "Catan");
+    const button = screen.getByRole("button", { name: /search games/i });
+    expect((button as HTMLButtonElement).disabled).toBe(false);
   });
 });

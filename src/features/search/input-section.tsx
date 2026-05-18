@@ -11,14 +11,16 @@ interface InputSectionProps {
   onSearchByName: (names: string[], includeExpansions: boolean) => void;
   onAddByIds: (ids: number[]) => void;
   isSearching: boolean;
-  hasConfig: boolean;
+  searchWarning: string | null;
+  idsWarning: string | null;
 }
 
 export function InputSection({
   onSearchByName,
   onAddByIds,
   isSearching,
-  hasConfig,
+  searchWarning,
+  idsWarning,
 }: InputSectionProps) {
   const [tab, setTab] = useState("names");
   const [textValue, setTextValue] = useState("");
@@ -109,7 +111,11 @@ export function InputSection({
       <div className="flex items-center gap-3">
         <Button
           onClick={handleSubmit}
-          disabled={!hasInput || isSearching || !hasConfig}
+          disabled={
+            !hasInput ||
+            isSearching ||
+            !!(tab === "names" ? searchWarning : idsWarning)
+          }
         >
           {isSearching && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           {tab === "names" ? "Search Games" : "Add to Collection"}
@@ -141,9 +147,9 @@ export function InputSection({
         )}
       </div>
 
-      {!hasConfig && (
+      {(tab === "names" ? searchWarning : idsWarning) && (
         <p className="text-destructive text-sm">
-          Please configure your BGG credentials in settings first.
+          {tab === "names" ? searchWarning : idsWarning}
         </p>
       )}
     </section>

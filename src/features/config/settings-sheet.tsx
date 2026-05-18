@@ -102,7 +102,9 @@ export function SettingsSheet() {
     });
   };
 
-  const hasConfig = config && (config.username || config.apiToken);
+  const hasConfig = Boolean(
+    config?.username && config.password && config.apiToken,
+  );
 
   return (
     <Sheet open={open} onOpenChange={handleOpen}>
@@ -118,9 +120,10 @@ export function SettingsSheet() {
         <SheetHeader>
           <SheetTitle>BGG Settings</SheetTitle>
           <SheetDescription>
-            Enter your BoardGameGeek credentials and API token.{" "}
+            Enter your BoardGameGeek credentials. The API token is only needed
+            for searching games by name.{" "}
             <a
-              href="https://boardgamegeek.com/using_the_xml_api"
+              href="https://boardgamegeek.com/applications"
               target="_blank"
               rel="noopener noreferrer"
               className="text-foreground underline"
@@ -149,6 +152,10 @@ export function SettingsSheet() {
               onChange={(v) => setForm((prev) => ({ ...prev, password: v }))}
               placeholder="your-bgg-password"
             />
+            <p className="text-muted-foreground text-xs">
+              Used to log in to BGG and add games to your collection via browser
+              automation.
+            </p>
           </div>
           <div className="space-y-2">
             <Label htmlFor="apiToken">XML API Token</Label>
@@ -158,6 +165,10 @@ export function SettingsSheet() {
               onChange={(v) => setForm((prev) => ({ ...prev, apiToken: v }))}
               placeholder="your-api-bearer-token"
             />
+            <p className="text-muted-foreground text-xs">
+              Only needed for searching games by name. Not required if you
+              already have BGG IDs.
+            </p>
           </div>
           <div className="flex gap-2 pt-2">
             <Button onClick={handleSave} disabled={saveConfig.isPending}>

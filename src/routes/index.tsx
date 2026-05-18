@@ -25,8 +25,16 @@ function Home() {
   const search = useSearch();
   const collection = useCollectionStream();
 
-  const hasConfig = Boolean(config?.username && config?.apiToken);
+  const hasCredentials = Boolean(config?.username && config?.password);
+  const hasToken = Boolean(config?.apiToken);
   const isSearching = search.phase === "searching";
+
+  const searchWarning = !hasToken
+    ? "Set your XML API token in settings to search by name."
+    : null;
+  const idsWarning = !hasCredentials
+    ? "Set your BGG username and password in settings to add games."
+    : null;
 
   const phase: AppPhase =
     collection.phase !== "idle"
@@ -41,7 +49,9 @@ function Home() {
 
   const handleSearchByName = (names: string[], includeExpansions: boolean) => {
     if (!config?.apiToken) {
-      toast.error("Please set your API token in settings first.");
+      toast.error(
+        "Please set your XML API token in settings to search by name",
+      );
       return;
     }
     search.startSearch(names, config.apiToken, includeExpansions);
@@ -49,7 +59,7 @@ function Home() {
 
   const handleAddByIds = (ids: number[]) => {
     if (!config?.username || !config?.password) {
-      toast.error("Please set your BGG credentials in settings first.");
+      toast.error("Please set your BGG credentials in settings first");
       return;
     }
     const nameMap = new Map<number, string>();
@@ -63,7 +73,7 @@ function Home() {
 
   const handleAddToCollection = () => {
     if (!config?.username || !config?.password) {
-      toast.error("Please set your BGG credentials in settings first.");
+      toast.error("Please set your BGG credentials in settings first");
       return;
     }
 
@@ -138,7 +148,8 @@ function Home() {
             onSearchByName={handleSearchByName}
             onAddByIds={handleAddByIds}
             isSearching={isSearching}
-            hasConfig={hasConfig}
+            searchWarning={searchWarning}
+            idsWarning={idsWarning}
           />
         )}
 
