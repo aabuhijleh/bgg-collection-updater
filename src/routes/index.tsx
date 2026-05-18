@@ -133,9 +133,7 @@ function Home() {
       </header>
 
       <div className="space-y-8">
-        {(phase === "input" ||
-          phase === "searching" ||
-          phase === "search_results") && (
+        {(phase === "input" || phase === "search_results") && (
           <InputSection
             onSearchByName={handleSearchByName}
             onAddByIds={handleAddByIds}
