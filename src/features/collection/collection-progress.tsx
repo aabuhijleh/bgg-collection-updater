@@ -14,7 +14,7 @@ import {
   Loader2,
   XCircle,
 } from "lucide-react";
-import { useDeferredValue, useState } from "react";
+import { useState } from "react";
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
@@ -87,6 +87,18 @@ const statusDisplay: Record<
   },
 };
 
+function nameFilterFn(
+  row: { original: CollectionGameEntry },
+  _columnId: string,
+  filterValue: string,
+): boolean {
+  const query = filterValue.toLowerCase();
+  return (
+    (row.original.name?.toLowerCase().includes(query) ?? false) ||
+    String(row.original.bggId).includes(query)
+  );
+}
+
 const columns: ColumnDef<CollectionGameEntry>[] = [
   {
     accessorKey: "bggId",
@@ -106,13 +118,7 @@ const columns: ColumnDef<CollectionGameEntry>[] = [
     accessorKey: "name",
     header: "Game",
     cell: ({ row }) => row.original.name ?? "—",
-    filterFn: (row, _columnId, filterValue: string) => {
-      const query = filterValue.toLowerCase();
-      return (
-        (row.original.name?.toLowerCase().includes(query) ?? false) ||
-        String(row.original.bggId).includes(query)
-      );
-    },
+    filterFn: nameFilterFn,
   },
   {
     accessorKey: "status",
@@ -138,24 +144,23 @@ export function CollectionProgress({
   onRetryFailed,
   onReset,
 }: CollectionProgressProps) {
-  const [searchQuery, setSearchQuery] = useState("");
-  const deferredSearch = useDeferredValue(searchQuery);
-  const [statusFilter, setStatusFilter] = useState("all");
-
-  const columnFilters: ColumnFiltersState = [
-    ...(deferredSearch ? [{ id: "name", value: deferredSearch }] : []),
-    ...(statusFilter !== "all" ? [{ id: "status", value: statusFilter }] : []),
-  ];
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
 
   const table = useReactTable({
     data: games,
     columns,
     state: { columnFilters },
+    onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     initialState: { pagination: { pageSize: 50 } },
   });
+
+  const searchValue =
+    (table.getColumn("name")?.getFilterValue() as string) ?? "";
+  const statusValue =
+    (table.getColumn("status")?.getFilterValue() as string) ?? "all";
 
   const progressPercent =
     progress.total > 0
@@ -223,11 +228,20 @@ export function CollectionProgress({
       <div className="flex items-center gap-2">
         <Input
           placeholder="Search games..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+          value={searchValue}
+          onChange={(e) =>
+            table.getColumn("name")?.setFilterValue(e.target.value || undefined)
+          }
           className="max-w-xs"
         />
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
+        <Select
+          value={statusValue}
+          onValueChange={(value) =>
+            table
+              .getColumn("status")
+              ?.setFilterValue(value === "all" ? undefined : value)
+          }
+        >
           <SelectTrigger>
             <SelectValue placeholder="All statuses" />
           </SelectTrigger>

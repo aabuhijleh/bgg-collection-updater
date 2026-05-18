@@ -10,7 +10,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { ChevronDown, ChevronRight, Download, Loader2 } from "lucide-react";
-import { Fragment, useDeferredValue, useState } from "react";
+import { Fragment, useState } from "react";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
@@ -56,6 +56,84 @@ const statusConfig: Record<
   skipped: { label: "Skipped", variant: "outline" },
 };
 
+function searchFilterFn(
+  row: { original: SearchResultEntry },
+  _columnId: string,
+  filterValue: string,
+): boolean {
+  const query = filterValue.toLowerCase();
+  return (
+    row.original.inputName.toLowerCase().includes(query) ||
+    (row.original.matchedName?.toLowerCase().includes(query) ?? false)
+  );
+}
+
+const columns: ColumnDef<SearchResultEntry>[] = [
+  {
+    id: "expander",
+    size: 40,
+    cell: ({ row }) => {
+      if (row.original.status !== "ambiguous") return null;
+      return (
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-6 w-6"
+          onClick={() => row.toggleExpanded()}
+        >
+          {row.getIsExpanded() ? (
+            <ChevronDown className="h-4 w-4" />
+          ) : (
+            <ChevronRight className="h-4 w-4" />
+          )}
+        </Button>
+      );
+    },
+  },
+  {
+    accessorKey: "inputName",
+    header: "Name",
+    filterFn: searchFilterFn,
+  },
+  {
+    accessorKey: "matchedName",
+    header: "Match",
+    cell: ({ row }) => row.original.matchedName ?? "—",
+  },
+  {
+    accessorKey: "bggId",
+    header: "BGG ID",
+    cell: ({ row }) =>
+      row.original.bggId ? (
+        <a
+          href={`https://boardgamegeek.com/boardgame/${row.original.bggId}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-foreground hover:underline"
+        >
+          {row.original.bggId}
+        </a>
+      ) : (
+        "—"
+      ),
+  },
+  {
+    accessorKey: "status",
+    header: "Status",
+    cell: ({ row }) => {
+      const cfg = statusConfig[row.original.status];
+      return (
+        <Badge variant={cfg?.variant ?? "outline"}>
+          {row.original.status === "searching" && (
+            <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+          )}
+          {cfg?.label ?? row.original.status}
+        </Badge>
+      );
+    },
+  },
+];
+
 export function SearchResultsTable({
   results,
   onResolve,
@@ -64,92 +142,14 @@ export function SearchResultsTable({
   isSearching,
 }: SearchResultsTableProps) {
   const [expanded, setExpanded] = useState<ExpandedState>({});
-  const [searchQuery, setSearchQuery] = useState("");
-  const deferredSearch = useDeferredValue(searchQuery);
-  const [statusFilter, setStatusFilter] = useState("all");
-
-  const columnFilters: ColumnFiltersState = [
-    ...(deferredSearch ? [{ id: "inputName", value: deferredSearch }] : []),
-    ...(statusFilter !== "all" ? [{ id: "status", value: statusFilter }] : []),
-  ];
-
-  const columns: ColumnDef<SearchResultEntry>[] = [
-    {
-      id: "expander",
-      size: 40,
-      cell: ({ row }) => {
-        if (row.original.status !== "ambiguous") return null;
-        return (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-6 w-6"
-            onClick={() => row.toggleExpanded()}
-          >
-            {row.getIsExpanded() ? (
-              <ChevronDown className="h-4 w-4" />
-            ) : (
-              <ChevronRight className="h-4 w-4" />
-            )}
-          </Button>
-        );
-      },
-    },
-    {
-      accessorKey: "inputName",
-      header: "Name",
-      filterFn: (row, _columnId, filterValue: string) => {
-        const query = filterValue.toLowerCase();
-        return (
-          row.original.inputName.toLowerCase().includes(query) ||
-          (row.original.matchedName?.toLowerCase().includes(query) ?? false)
-        );
-      },
-    },
-    {
-      accessorKey: "matchedName",
-      header: "Match",
-      cell: ({ row }) => row.original.matchedName ?? "—",
-    },
-    {
-      accessorKey: "bggId",
-      header: "BGG ID",
-      cell: ({ row }) =>
-        row.original.bggId ? (
-          <a
-            href={`https://boardgamegeek.com/boardgame/${row.original.bggId}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-foreground hover:underline"
-          >
-            {row.original.bggId}
-          </a>
-        ) : (
-          "—"
-        ),
-    },
-    {
-      accessorKey: "status",
-      header: "Status",
-      cell: ({ row }) => {
-        const cfg = statusConfig[row.original.status];
-        return (
-          <Badge variant={cfg?.variant ?? "outline"}>
-            {row.original.status === "searching" && (
-              <Loader2 className="mr-1 h-3 w-3 animate-spin" />
-            )}
-            {cfg?.label ?? row.original.status}
-          </Badge>
-        );
-      },
-    },
-  ];
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
 
   const table = useReactTable({
     data: results,
     columns,
     state: { expanded, columnFilters },
     onExpandedChange: setExpanded,
+    onColumnFiltersChange: setColumnFilters,
     getRowCanExpand: (row) => row.original.status === "ambiguous",
     getCoreRowModel: getCoreRowModel(),
     getExpandedRowModel: getExpandedRowModel(),
@@ -157,6 +157,11 @@ export function SearchResultsTable({
     getPaginationRowModel: getPaginationRowModel(),
     initialState: { pagination: { pageSize: 50 } },
   });
+
+  const searchValue =
+    (table.getColumn("inputName")?.getFilterValue() as string) ?? "";
+  const statusValue =
+    (table.getColumn("status")?.getFilterValue() as string) ?? "all";
 
   const foundCount = results.filter((r) => r.status === "found").length;
   const notFoundCount = results.filter((r) => r.status === "not_found").length;
@@ -224,11 +229,22 @@ export function SearchResultsTable({
       <div className="flex items-center gap-2">
         <Input
           placeholder="Search games..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+          value={searchValue}
+          onChange={(e) =>
+            table
+              .getColumn("inputName")
+              ?.setFilterValue(e.target.value || undefined)
+          }
           className="max-w-xs"
         />
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
+        <Select
+          value={statusValue}
+          onValueChange={(value) =>
+            table
+              .getColumn("status")
+              ?.setFilterValue(value === "all" ? undefined : value)
+          }
+        >
           <SelectTrigger>
             <SelectValue placeholder="All statuses" />
           </SelectTrigger>
