@@ -55,3 +55,10 @@ No other data is persisted to disk. Search results and collection state exist on
 1. **Enter games** -- paste names (semicolon, newline, or comma separated) or upload a CSV. If you already have BGG IDs, switch to the "I Already Have IDs" tab.
 2. **Review search results** -- the app searches the BGG API for each name. Ambiguous matches expand inline so you can pick the right game. Download results as CSV.
 3. **Add to collection** -- the app launches a headless browser, logs into BGG with your credentials, checks what you already own, and adds the new games. Progress streams in real time.
+
+## Credits
+
+Based on the work by [@fenglisch](https://github.com/fenglisch):
+
+- [translate-board-game-names-into-bgg-ids](https://github.com/fenglisch/translate-board-game-names-into-bgg-ids) -- name-to-ID search logic
+- [bulk-upload-board-games-into-bgg-collection](https://github.com/fenglisch/bulk-upload-board-games-into-bgg-collection) -- Browser automation-based collection upload
