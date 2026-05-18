@@ -9,7 +9,7 @@ const mockMutate = vi.fn();
 
 vi.mock("~/features/config/use-config", () => ({
   useConfig: () => ({
-    data: { username: "testuser", password: "testpass", apiToken: "tok123" },
+    data: { username: "testuser", password: "testpass" },
   }),
   useSaveConfig: () => ({
     mutate: mockMutate,
@@ -43,11 +43,10 @@ describe("SettingsSheet", () => {
     expect((usernameInput as HTMLInputElement).value).toBe("testuser");
   });
 
-  it("renders all three form fields with labels", async () => {
+  it("renders username and password fields with labels", async () => {
     await openSheet();
     expect(screen.getByLabelText(/bgg username/i)).toBeDefined();
     expect(screen.getByLabelText(/bgg password/i)).toBeDefined();
-    expect(screen.getByLabelText(/xml api token/i)).toBeDefined();
   });
 
   it("calls save with form values", async () => {
@@ -69,18 +68,13 @@ describe("SettingsSheet", () => {
       screen.getByRole("button", { name: /^clear$/i, hidden: false }),
     );
     expect(mockMutate).toHaveBeenCalledWith(
-      { username: "", password: "", apiToken: "" },
+      { username: "", password: "" },
       expect.any(Object),
     );
   });
 
-  it("shows description text for password and api token fields", async () => {
+  it("shows description text for password field", async () => {
     await openSheet();
     expect(screen.getByText(/used to log in to bgg/i)).toBeDefined();
-    expect(
-      screen.getByText(
-        /only needed for searching games by name\. not required/i,
-      ),
-    ).toBeDefined();
   });
 });

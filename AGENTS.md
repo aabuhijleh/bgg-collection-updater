@@ -10,7 +10,7 @@ Note: CLAUDE.md is a symlink to this file.
 
 Local web app that bulk-adds board games to a user's BoardGameGeek collection. Two main capabilities:
 
-1. **Name-to-ID search** -- search game names against BGG XML API2 to resolve BGG IDs
+1. **Name-to-ID search** -- search game names via BGG Scan API proxy to resolve BGG IDs
 2. **Bulk collection upload** -- add games to BGG collection via Playwright browser automation
 
 Single page app with four phases: Settings -> Input -> Search Results -> Add to Collection.
@@ -18,18 +18,19 @@ Single page app with four phases: Settings -> Input -> Search Results -> Add to 
 ## Architecture
 
 - **Frontend:** React 19 (with React Compiler), TanStack Router (file-based), TanStack Query, TanStack Table, shadcn/ui + Tailwind CSS 4
-- **Server:** TanStack Start server functions (`createServerFn`) for RPC, server route handlers for SSE streaming
+- **Server:** TanStack Start server functions (`createServerFn`) for RPC, server route handler for SSE streaming (collection only)
 - **Browser automation:** Playwright (headless Chromium) for BGG login and collection management
-- **Config:** Stored at `~/.bgg-collection-updater.json` (username, password, apiToken)
+- **Config:** Stored at `~/.bgg-collection-updater.json` (username, password)
 
 ## Critical Flows
 
-### BGG XML API2 (Search)
+### BGG Scan API (Search)
 
-- Endpoint: `GET /xmlapi2/search?query={name}&type=boardgame` with `Authorization: Bearer {token}`
-- Rate limit: 750ms delay between calls. On 429: wait 30s, auto-retry.
+- Proxied via BGG Scan: `GET https://bgg-scan.aabuhijleh.com/api/bgg/search?name={name}` and `/api/bgg/details?ids={ids}`
+- Server function calls bgg-scan API; client loops sequentially with exponential backoff
+- Backoff: 10s × 2^attempt (max 3 retries). Inter-request delay: 2s normal, 15s after rate limit
 - Match logic: 0 results = not_found, 1 result = auto-accept, 2+ = check exact name match, otherwise ambiguous (user picks)
-- Details endpoint for disambiguation: `GET /xmlapi2/thing?id={ids}` (max 20 per request)
+- Details endpoint for disambiguation: max 20 IDs per request
 
 ### Playwright Collection Upload
 
@@ -38,9 +39,9 @@ Single page app with four phases: Settings -> Input -> Search Results -> Add to 
 - For each new game: navigate to game page, click visible "Add To Collection" button, check "Own", save
 - Progress streamed via SSE from server route to frontend
 
-### SSE Streaming
+### SSE Streaming (Collection Only)
 
-- Two SSE endpoints: `/api/search` (search results) and `/api/add-to-collection` (add progress)
+- SSE endpoint: `/api/add-to-collection` (add progress)
 - Events: `login`, `collection-scanned`, `game-adding`, `game-added`, `game-failed`, `game-skipped`, `done`
 
 ## Project Structure
@@ -50,7 +51,7 @@ src/
 ├── routes/                     # TanStack Router file-based routes
 │   ├── __root.tsx              # Root layout
 │   ├── index.tsx               # Main single-page app
-│   └── api/                    # Server route handlers (SSE endpoints)
+│   └── api/                    # Server route handlers (SSE endpoint for collection)
 ├── features/                   # Feature modules (self-contained: server/hooks/UI)
 │   ├── config/                 # Settings management
 │   ├── search/                 # Name-to-ID search
@@ -73,6 +74,6 @@ src/
 
 ## Testing
 
-- Unit: XML parsing, CSV parsing, name matching, Zod schemas
+- Unit: BGG API calls (mocked), CSV parsing, Zod schemas
 - Component: form behavior, table rendering, disambiguation, progress updates
 - NOT tested: Playwright against real BGG (requires real credentials, too slow)

@@ -6,7 +6,12 @@ import type { BggGameDetail } from "~/lib/bgg-api";
 interface DisambiguationRowProps {
   candidates: BggGameDetail[];
   searchName: string;
-  onSelect: (bggId: number, name: string) => void;
+  onSelect: (
+    bggId: number,
+    name: string,
+    yearPublished: number | null,
+    thumbnail: string,
+  ) => void;
   onSkip: () => void;
 }
 
@@ -31,12 +36,19 @@ export function DisambiguationRow({
             <Card
               key={game.id}
               className="cursor-pointer transition-colors hover:bg-accent"
-              onClick={() => onSelect(game.id, game.name)}
+              onClick={() =>
+                onSelect(game.id, game.name, game.yearPublished, game.thumbnail)
+              }
               role="button"
               tabIndex={0}
               onKeyDown={(e) => {
                 if (e.key === "Enter" || e.key === " ") {
-                  onSelect(game.id, game.name);
+                  onSelect(
+                    game.id,
+                    game.name,
+                    game.yearPublished,
+                    game.thumbnail,
+                  );
                 }
               }}
             >

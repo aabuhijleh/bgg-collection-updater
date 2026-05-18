@@ -6,14 +6,13 @@ describe("configSchema", () => {
     const config: AppConfig = {
       username: "testuser",
       password: "testpass",
-      apiToken: "abc123",
     };
     const result = configSchema.safeParse(config);
     expect(result.success).toBe(true);
   });
 
   it("allows empty strings", () => {
-    const config = { username: "", password: "", apiToken: "" };
+    const config = { username: "", password: "" };
     const result = configSchema.safeParse(config);
     expect(result.success).toBe(true);
   });
@@ -27,7 +26,6 @@ describe("configSchema", () => {
     const result = configSchema.safeParse({
       username: 123,
       password: "pass",
-      apiToken: "token",
     });
     expect(result.success).toBe(false);
   });

@@ -10,17 +10,11 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as ApiSearchRouteImport } from './routes/api/search'
 import { Route as ApiAddToCollectionRouteImport } from './routes/api/add-to-collection'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiSearchRoute = ApiSearchRouteImport.update({
-  id: '/api/search',
-  path: '/api/search',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiAddToCollectionRoute = ApiAddToCollectionRouteImport.update({
@@ -32,31 +26,27 @@ const ApiAddToCollectionRoute = ApiAddToCollectionRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/api/add-to-collection': typeof ApiAddToCollectionRoute
-  '/api/search': typeof ApiSearchRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/api/add-to-collection': typeof ApiAddToCollectionRoute
-  '/api/search': typeof ApiSearchRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/api/add-to-collection': typeof ApiAddToCollectionRoute
-  '/api/search': typeof ApiSearchRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/api/add-to-collection' | '/api/search'
+  fullPaths: '/' | '/api/add-to-collection'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/api/add-to-collection' | '/api/search'
-  id: '__root__' | '/' | '/api/add-to-collection' | '/api/search'
+  to: '/' | '/api/add-to-collection'
+  id: '__root__' | '/' | '/api/add-to-collection'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ApiAddToCollectionRoute: typeof ApiAddToCollectionRoute
-  ApiSearchRoute: typeof ApiSearchRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -66,13 +56,6 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/search': {
-      id: '/api/search'
-      path: '/api/search'
-      fullPath: '/api/search'
-      preLoaderRoute: typeof ApiSearchRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/add-to-collection': {
@@ -88,7 +71,6 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ApiAddToCollectionRoute: ApiAddToCollectionRoute,
-  ApiSearchRoute: ApiSearchRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

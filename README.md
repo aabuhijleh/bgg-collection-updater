@@ -8,9 +8,6 @@ Bulk-add board games to your [BoardGameGeek](https://boardgamegeek.com) collecti
 
 - [Bun](https://bun.sh)
 - A BGG account
-- A BGG [XML API](https://boardgamegeek.com/using_the_xml_api) token (only needed for searching games by name)
-  - [Register an application to get a token here](https://boardgamegeek.com/applications)
-  - Not required if you already have BGG IDs and just want to add them to your collection
 
 ## Quick Start
 
@@ -19,7 +16,7 @@ bun install
 bun start
 ```
 
-Open `http://localhost:3000`. Click the gear icon to enter your BGG username, password, and API token.
+Open `http://localhost:3000`. Click the gear icon to enter your BGG username and password.
 
 ## Example Files
 
@@ -32,7 +29,7 @@ Upload these via the "Upload CSV" button or copy-paste the contents.
 
 ## Data Storage
 
-Your BGG credentials (username, password, API token) are stored locally in a JSON file in your home directory. Nothing is sent to any server other than BGG itself.
+Your BGG credentials (username and password) are stored locally in a JSON file in your home directory. Search queries are proxied through the [BGG Scan](https://bgg-scan.aabuhijleh.com/) API; credentials are only sent to BGG itself during collection upload.
 
 | OS              | Path                                          |
 | --------------- | --------------------------------------------- |
@@ -44,8 +41,7 @@ The file contains:
 ```json
 {
   "username": "your-bgg-username",
-  "password": "your-bgg-password",
-  "apiToken": "your-bgg-api-token"
+  "password": "your-bgg-password"
 }
 ```
 
@@ -54,8 +50,8 @@ No other data is persisted to disk. Search results and collection state exist on
 ## How It Works
 
 1. **Enter games** -- paste names (semicolon, newline, or comma separated) or upload a CSV. If you already have BGG IDs, switch to the "I Already Have IDs" tab.
-2. **Review search results** -- the app searches the BGG XML API for each name (requires an API token). Ambiguous matches expand inline so you can pick the right game. Download results as CSV.
-3. **Add to collection** -- the app launches a headless browser, logs into BGG with your username and password, checks what you already own, and adds the new games. No API token needed for this step. Progress streams in real time.
+2. **Review search results** -- the app searches BGG for each name via the [BGG Scan](https://bgg-scan.aabuhijleh.com/) API. Ambiguous matches expand inline so you can pick the right game. Download results as CSV.
+3. **Add to collection** -- the app launches a headless browser, logs into BGG with your username and password, checks what you already own, and adds the new games. Progress streams in real time.
 
 ## Related
 

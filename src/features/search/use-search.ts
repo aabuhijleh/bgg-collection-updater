@@ -1,5 +1,7 @@
-import { useState } from "react";
-import type { SearchResultEntry, SearchStreamEvent } from "./search.types";
+import { useRef, useState } from "react";
+import { delay } from "~/lib/bgg-api";
+import { searchSingleGame } from "./search.api";
+import type { SearchResultEntry } from "./search.types";
 
 type SearchPhase = "idle" | "searching" | "done";
 
@@ -10,97 +12,121 @@ export function useSearch() {
     null,
   );
   const [error, setError] = useState<string | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
 
-  const startSearch = async (
-    names: string[],
-    token: string,
-    includeExpansions: boolean,
-  ) => {
+  const startSearch = async (names: string[]) => {
+    abortRef.current?.abort();
+    const abort = new AbortController();
+    abortRef.current = abort;
+
     setResults(
       names.map((name) => ({
         inputName: name,
         status: "pending" as const,
         bggId: null,
         matchedName: null,
+        thumbnail: null,
+        yearPublished: null,
         candidates: [],
       })),
     );
     setPhase("searching");
     setError(null);
 
-    try {
-      const response = await fetch("/api/search", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ names, token, includeExpansions }),
+    let wasRateLimited = false;
+
+    for (let i = 0; i < names.length; i++) {
+      if (abort.signal.aborted) break;
+
+      setResults((prev) => {
+        const next = [...prev];
+        next[i] = { ...next[i], status: "searching" };
+        return next;
       });
 
-      if (!response.ok || !response.body) {
-        setError("Failed to start search");
-        setPhase("done");
-        return;
-      }
+      let entry: SearchResultEntry | null = null;
 
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = "";
+      for (let attempt = 0; attempt <= 3; attempt++) {
+        if (abort.signal.aborted) break;
 
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
+        try {
+          entry = await searchSingleGame({ data: { name: names[i] } });
+          break;
+        } catch {
+          if (attempt < 3) {
+            const backoffMs = 10_000 * 2 ** attempt;
+            const seconds = Math.round(backoffMs / 1000);
+            setRateLimitCountdown(seconds);
 
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split("\n\n");
-        buffer = lines.pop() ?? "";
+            let remaining = seconds;
+            const interval = setInterval(() => {
+              remaining--;
+              if (remaining <= 0) {
+                clearInterval(interval);
+                setRateLimitCountdown(null);
+              } else {
+                setRateLimitCountdown(remaining);
+              }
+            }, 1000);
 
-        for (const line of lines) {
-          const dataLine = line.trim();
-          if (!dataLine.startsWith("data: ")) continue;
-          const json = dataLine.slice(6);
-
-          try {
-            const event: SearchStreamEvent = JSON.parse(json);
-
-            if (
-              event.type === "result" &&
-              event.entry != null &&
-              event.index != null
-            ) {
-              const { index, entry } = event;
-              setResults((prev) => {
-                const next = [...prev];
-                next[index] = entry;
-                return next;
-              });
-            } else if (event.type === "rate_limited" && event.retryIn) {
-              setRateLimitCountdown(event.retryIn);
-              let remaining = event.retryIn;
-              const interval = setInterval(() => {
-                remaining--;
-                if (remaining <= 0) {
-                  clearInterval(interval);
-                  setRateLimitCountdown(null);
-                } else {
-                  setRateLimitCountdown(remaining);
-                }
-              }, 1000);
-            } else if (event.type === "done") {
-              setPhase("done");
-            }
-          } catch {
-            // skip malformed JSON
+            await delay(backoffMs);
+            clearInterval(interval);
+            setRateLimitCountdown(null);
+            wasRateLimited = true;
+          } else {
+            entry = {
+              inputName: names[i],
+              status: "not_found",
+              bggId: null,
+              matchedName: null,
+              thumbnail: null,
+              yearPublished: null,
+              candidates: [],
+            };
           }
         }
       }
 
-      setPhase("done");
-    } catch {
-      setError("Search connection failed");
-      setPhase("done");
+      if (abort.signal.aborted) break;
+
+      if (entry) {
+        const captured = entry;
+        setResults((prev) => {
+          const next = [...prev];
+          next[i] = captured;
+          return next;
+        });
+      }
+
+      if (i < names.length - 1) {
+        await delay(wasRateLimited ? 15_000 : 2_000);
+      }
     }
+
+    setRateLimitCountdown(null);
+    setPhase("done");
   };
 
-  const resolveAmbiguous = (index: number, bggId: number, name: string) => {
+  const cancelSearch = () => {
+    abortRef.current?.abort();
+    setRateLimitCountdown(null);
+    setResults((prev) =>
+      prev.map((r) =>
+        r.status === "pending" || r.status === "searching"
+          ? { ...r, status: "skipped" }
+          : r,
+      ),
+    );
+    setPhase("done");
+  };
+
+  const resolveAmbiguous = (
+    index: number,
+    bggId: number,
+    name: string,
+    yearPublished: number | null,
+    thumbnail: string | null,
+  ) => {
     setResults((prev) => {
       const next = [...prev];
       next[index] = {
@@ -108,6 +134,8 @@ export function useSearch() {
         status: "found",
         bggId,
         matchedName: name,
+        thumbnail,
+        yearPublished,
         candidates: [],
       };
       return next;
@@ -126,7 +154,12 @@ export function useSearch() {
     });
   };
 
+  const removeResult = (index: number) => {
+    setResults((prev) => prev.filter((_, i) => i !== index));
+  };
+
   const reset = () => {
+    abortRef.current?.abort();
     setResults([]);
     setPhase("idle");
     setError(null);
@@ -147,8 +180,10 @@ export function useSearch() {
     resolvedResults,
     hasUnresolvedAmbiguous,
     startSearch,
+    cancelSearch,
     resolveAmbiguous,
     skipAmbiguous,
+    removeResult,
     reset,
   };
 }

@@ -3,37 +3,39 @@ import z from "zod";
 import {
   type BggGameDetail,
   fetchGameDetails,
-  fetchSearchResults,
-  findBestMatch,
-  parseSearchXml,
-  parseThingXml,
   RateLimitError,
+  searchGame,
 } from "~/lib/bgg-api";
 import type { SearchResultEntry } from "./search.types";
 
 const searchInputSchema = z.object({
   name: z.string(),
-  token: z.string(),
-  includeExpansions: z.boolean(),
 });
 
 export const searchSingleGame = createServerFn({ method: "POST" })
   .inputValidator(searchInputSchema)
   .handler(async ({ data }): Promise<SearchResultEntry> => {
-    const xml = await fetchSearchResults(
-      data.name,
-      data.token,
-      data.includeExpansions,
-    );
-    const items = parseSearchXml(xml);
-    const match = findBestMatch(data.name, items);
+    const match = await searchGame(data.name);
 
     if (match.status === "found") {
+      let thumbnail: string | null = null;
+      let yearPublished: number | null = null;
+      try {
+        const [detail] = await fetchGameDetails([match.id]);
+        if (detail) {
+          thumbnail = detail.thumbnail;
+          yearPublished = detail.yearPublished;
+        }
+      } catch (err) {
+        if (err instanceof RateLimitError) throw err;
+      }
       return {
         inputName: data.name,
         status: "found",
         bggId: match.id,
         matchedName: match.name,
+        thumbnail,
+        yearPublished,
         candidates: [],
       };
     }
@@ -44,18 +46,15 @@ export const searchSingleGame = createServerFn({ method: "POST" })
         status: "not_found",
         bggId: null,
         matchedName: null,
+        thumbnail: null,
+        yearPublished: null,
         candidates: [],
       };
     }
 
     let candidates: BggGameDetail[] = [];
     try {
-      const detailXml = await fetchGameDetails(
-        match.candidateIds.slice(0, 20),
-        data.token,
-      );
-      candidates = parseThingXml(detailXml);
-      candidates.sort((a, b) => b.totalVotes - a.totalVotes);
+      candidates = await fetchGameDetails(match.candidateIds.slice(0, 20));
     } catch (err) {
       if (err instanceof RateLimitError) throw err;
     }
@@ -65,6 +64,8 @@ export const searchSingleGame = createServerFn({ method: "POST" })
       status: "ambiguous",
       bggId: null,
       matchedName: null,
+      thumbnail: null,
+      yearPublished: null,
       candidates,
     };
   });

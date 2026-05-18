@@ -1,18 +1,20 @@
-import { useForm, useStore } from "@tanstack/react-form";
-import { FileUp, Loader2, Search } from "lucide-react";
+import { Loader2, Plus, Search, Upload } from "lucide-react";
 import { useRef, useState } from "react";
-import { Button } from "~/components/ui/button";
-import { Checkbox } from "~/components/ui/checkbox";
-import { Field, FieldLabel } from "~/components/ui/field";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
-import { Textarea } from "~/components/ui/textarea";
+import { toast } from "sonner";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupText,
+  InputGroupTextarea,
+} from "~/components/ui/input-group";
+import { Tabs, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { type ParsedIdEntry, parseIds, parseInput } from "~/lib/csv";
 
 interface InputSectionProps {
-  onSearchByName: (names: string[], includeExpansions: boolean) => void;
+  onSearchByName: (names: string[]) => void;
   onAddByIds: (entries: ParsedIdEntry[]) => void;
   isSearching: boolean;
-  searchWarning: string | null;
   idsWarning: string | null;
 }
 
@@ -20,34 +22,37 @@ export function InputSection({
   onSearchByName,
   onAddByIds,
   isSearching,
-  searchWarning,
   idsWarning,
 }: InputSectionProps) {
   const [tab, setTab] = useState("names");
+  const [textValue, setTextValue] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const form = useForm({
-    defaultValues: {
-      textValue: "",
-      includeExpansions: false,
-    },
-    onSubmit: ({ value }) => {
-      if (tab === "names") {
-        const names = parseInput(value.textValue);
-        if (names.length > 0) onSearchByName(names, value.includeExpansions);
-      } else {
-        const entries = parseIds(value.textValue);
-        if (entries.length > 0) onAddByIds(entries);
-      }
-    },
-  });
-
-  const textValue = useStore(form.store, (s) => s.values.textValue);
 
   const parsedNames = tab === "names" ? parseInput(textValue) : [];
   const parsedIdEntries = tab === "ids" ? parseIds(textValue) : [];
-  const hasInput =
-    tab === "names" ? parsedNames.length > 0 : parsedIdEntries.length > 0;
+  const itemCount =
+    tab === "names" ? parsedNames.length : parsedIdEntries.length;
+  const hasInput = itemCount > 0;
+
+  const handleSubmit = () => {
+    if (!hasInput) {
+      toast.warning(
+        tab === "names"
+          ? "Enter at least one game name"
+          : "Enter at least one BGG ID",
+      );
+      return;
+    }
+    if (tab === "ids" && idsWarning) {
+      toast.error(idsWarning);
+      return;
+    }
+    if (tab === "names") {
+      onSearchByName(parsedNames);
+    } else {
+      onAddByIds(parsedIdEntries);
+    }
+  };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -56,7 +61,7 @@ export function InputSection({
     reader.onload = (ev) => {
       const content = ev.target?.result;
       if (typeof content === "string") {
-        form.setFieldValue("textValue", content);
+        setTextValue((prev) => (prev ? `${prev}\n${content}` : content));
       }
     };
     reader.readAsText(file);
@@ -74,123 +79,87 @@ export function InputSection({
         </p>
       </div>
 
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          form.handleSubmit();
-        }}
-        className="space-y-4"
-      >
-        <Tabs value={tab} onValueChange={setTab}>
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="names">
-              <Search />
-              Search by Name
-            </TabsTrigger>
-            <TabsTrigger value="ids">I Already Have IDs</TabsTrigger>
-          </TabsList>
+      <Tabs value={tab} onValueChange={setTab}>
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="names">
+            <Search />
+            Search by Name
+          </TabsTrigger>
+          <TabsTrigger value="ids">I Already Have IDs</TabsTrigger>
+        </TabsList>
+      </Tabs>
 
-          <TabsContent value="names" className="space-y-3">
-            <Textarea
-              placeholder={"Catan; Wingspan; Azul\nor one game per line"}
-              value={textValue}
-              onChange={(e) => form.setFieldValue("textValue", e.target.value)}
-              rows={6}
-              className="resize-y font-mono text-sm"
-            />
-            <form.Field name="includeExpansions">
-              {(field) => (
-                <Field orientation="horizontal">
-                  <Checkbox
-                    id="expansions"
-                    checked={field.state.value}
-                    onCheckedChange={(checked) =>
-                      field.handleChange(checked === true)
-                    }
-                  />
-                  <FieldLabel
-                    htmlFor="expansions"
-                    className="font-normal text-sm"
-                  >
-                    Include expansions in search
-                  </FieldLabel>
-                </Field>
-              )}
-            </form.Field>
-            <p className="text-muted-foreground text-sm">
-              Tip: Use{" "}
-              <a
-                href="https://bgg-scan.aabuhijleh.com/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="underline underline-offset-4 hover:text-foreground"
-              >
-                BGG Scan
-              </a>{" "}
-              to scan board game barcodes and automatically get a list of BGG
-              IDs.
-            </p>
-          </TabsContent>
-
-          <TabsContent value="ids" className="space-y-3">
-            <Textarea
-              placeholder={"12345; 67890; 11111\nor one ID per line"}
-              value={textValue}
-              onChange={(e) => form.setFieldValue("textValue", e.target.value)}
-              rows={6}
-              className="resize-y font-mono text-sm"
-            />
-          </TabsContent>
-        </Tabs>
-
-        <div className="flex items-center gap-3">
-          <Button
-            type="submit"
-            disabled={
-              !hasInput ||
-              isSearching ||
-              !!(tab === "names" ? searchWarning : idsWarning)
-            }
-          >
-            {isSearching && <Loader2 className="animate-spin" />}
-            {tab === "names" ? "Search Games" : "Add to Collection"}
-          </Button>
-
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".csv,.txt"
-            onChange={handleFileUpload}
-            className="hidden"
-          />
-          <Button
-            type="button"
-            variant="outline"
+      <InputGroup>
+        <InputGroupTextarea
+          placeholder={
+            tab === "names"
+              ? "Catan; Wingspan; Azul\nor one game per line"
+              : "12345; 67890; 11111\nor one ID per line"
+          }
+          value={textValue}
+          onChange={(e) => setTextValue(e.target.value)}
+          rows={4}
+          className="font-mono text-sm"
+        />
+        <InputGroupAddon align="block-end" className="border-t">
+          <InputGroupText>
+            {hasInput
+              ? `${itemCount} ${itemCount === 1 ? "item" : "items"}`
+              : ""}
+          </InputGroupText>
+          <InputGroupButton
+            size="sm"
+            className="ml-auto"
+            variant="secondary"
             onClick={() => fileInputRef.current?.click()}
             disabled={isSearching}
           >
-            <FileUp />
+            <Upload />
             Upload CSV
-          </Button>
+          </InputGroupButton>
+          <InputGroupButton
+            size="sm"
+            variant="default"
+            onClick={handleSubmit}
+            disabled={isSearching}
+          >
+            {isSearching ? (
+              <Loader2 className="animate-spin" />
+            ) : tab === "names" ? (
+              <Search />
+            ) : (
+              <Plus />
+            )}
+            {tab === "names" ? "Search" : "Add"}
+          </InputGroupButton>
+        </InputGroupAddon>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".csv,.txt"
+          onChange={handleFileUpload}
+          className="hidden"
+        />
+      </InputGroup>
 
-          {hasInput && (
-            <span className="text-muted-foreground text-sm">
-              {tab === "names" ? parsedNames.length : parsedIdEntries.length}{" "}
-              {(tab === "names"
-                ? parsedNames.length
-                : parsedIdEntries.length) === 1
-                ? "item"
-                : "items"}
-            </span>
-          )}
-        </div>
+      {tab === "names" && (
+        <p className="text-muted-foreground text-sm">
+          Tip: Use{" "}
+          <a
+            href="https://bgg-scan.aabuhijleh.com/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline underline-offset-4 hover:text-foreground"
+          >
+            BGG Scan
+          </a>{" "}
+          to scan board game barcodes and automatically get a list of BGG IDs.
+        </p>
+      )}
 
-        {(tab === "names" ? searchWarning : idsWarning) && (
-          <p className="text-destructive text-sm">
-            {tab === "names" ? searchWarning : idsWarning}
-          </p>
-        )}
-      </form>
+      {tab === "ids" && idsWarning && (
+        <p className="text-destructive text-sm">{idsWarning}</p>
+      )}
     </section>
   );
 }

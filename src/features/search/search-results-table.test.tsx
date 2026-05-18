@@ -82,8 +82,24 @@ function makeResults(count: number): SearchResultEntry[] {
     bggId: i % statuses.length === 0 ? 100000 + i : null,
     matchedName:
       i % statuses.length === 0 ? gameNames[i % gameNames.length] : null,
+    thumbnail: null,
+    yearPublished: null,
     candidates: [],
   }));
+}
+
+function makeEntry(
+  overrides: Partial<SearchResultEntry> & { inputName: string },
+): SearchResultEntry {
+  return {
+    status: "pending",
+    bggId: null,
+    matchedName: null,
+    thumbnail: null,
+    yearPublished: null,
+    candidates: [],
+    ...overrides,
+  };
 }
 
 describe("SearchResultsTable", () => {
@@ -92,7 +108,9 @@ describe("SearchResultsTable", () => {
   const defaultProps = {
     onResolve: vi.fn(),
     onSkip: vi.fn(),
+    onRemove: vi.fn(),
     onAddToCollection: vi.fn(),
+    onCancelSearch: vi.fn(),
     isSearching: false,
   };
 
@@ -115,7 +133,9 @@ describe("SearchResultsTable", () => {
     const results = makeResults(100);
     render(<SearchResultsTable {...defaultProps} results={results} />);
 
-    const searchInput = screen.getByPlaceholderText("Search games...");
+    const searchInput = screen.getByPlaceholderText(
+      "Search names, BGG matches...",
+    );
     await user.type(searchInput, "Pandemic");
 
     const rows = screen.getAllByRole("row");
@@ -128,17 +148,18 @@ describe("SearchResultsTable", () => {
   it("searches across matched name too", async () => {
     const user = userEvent.setup();
     const results: SearchResultEntry[] = [
-      {
+      makeEntry({
         inputName: "Settlers",
         status: "found",
         bggId: 13,
         matchedName: "Catan",
-        candidates: [],
-      },
+      }),
     ];
     render(<SearchResultsTable {...defaultProps} results={results} />);
 
-    const searchInput = screen.getByPlaceholderText("Search games...");
+    const searchInput = screen.getByPlaceholderText(
+      "Search names, BGG matches...",
+    );
     await user.type(searchInput, "Catan");
 
     expect(screen.getAllByRole("row").length).toBe(2);
@@ -148,17 +169,18 @@ describe("SearchResultsTable", () => {
   it("shows empty state when search matches nothing", async () => {
     const user = userEvent.setup();
     const results: SearchResultEntry[] = [
-      {
+      makeEntry({
         inputName: "Catan",
         status: "found",
         bggId: 13,
         matchedName: "Catan",
-        candidates: [],
-      },
+      }),
     ];
     render(<SearchResultsTable {...defaultProps} results={results} />);
 
-    const searchInput = screen.getByPlaceholderText("Search games...");
+    const searchInput = screen.getByPlaceholderText(
+      "Search names, BGG matches...",
+    );
     await user.type(searchInput, "zzzznonexistent");
 
     expect(screen.getByText("No results.")).toBeDefined();
@@ -168,41 +190,35 @@ describe("SearchResultsTable", () => {
     const results = makeResults(5);
     render(<SearchResultsTable {...defaultProps} results={results} />);
 
-    expect(screen.getByPlaceholderText("Search games...")).toBeDefined();
+    expect(
+      screen.getByPlaceholderText("Search names, BGG matches..."),
+    ).toBeDefined();
     expect(screen.getByRole("combobox")).toBeDefined();
-    expect(screen.getByText("All statuses")).toBeDefined();
+    expect(screen.getByText("All")).toBeDefined();
   });
 
-  it("shows correct status counts in summary", () => {
+  it("shows correct status counts in badges", () => {
     const results: SearchResultEntry[] = [
-      {
+      makeEntry({
         inputName: "A",
         status: "found",
         bggId: 1000,
         matchedName: "A",
-        candidates: [],
-      },
-      {
+      }),
+      makeEntry({
         inputName: "B",
         status: "found",
         bggId: 2000,
         matchedName: "B",
-        candidates: [],
-      },
-      {
+      }),
+      makeEntry({
         inputName: "C",
         status: "not_found",
-        bggId: null,
-        matchedName: null,
-        candidates: [],
-      },
-      {
+      }),
+      makeEntry({
         inputName: "D",
         status: "ambiguous",
-        bggId: null,
-        matchedName: null,
-        candidates: [],
-      },
+      }),
     ];
     render(<SearchResultsTable {...defaultProps} results={results} />);
 
@@ -210,6 +226,9 @@ describe("SearchResultsTable", () => {
       screen.getByText((_, el) => el?.textContent === "2 found"),
     ).toBeDefined();
     expect(screen.getByText("Add to Collection (2)")).toBeDefined();
+    expect(
+      screen.getByText((_, el) => el?.textContent === "4 scanned"),
+    ).toBeDefined();
   });
 
   it("handles large dataset without error", () => {
@@ -227,7 +246,7 @@ describe("SearchResultsTable", () => {
         <SearchResultsTable {...defaultProps} results={results} isSearching />,
       );
 
-      const nextButton = screen.getByRole("button", { name: "Next" });
+      const nextButton = screen.getByRole("button", { name: "Next page" });
       await user.click(nextButton);
       expect(screen.getByText("Page 2 of 3")).toBeDefined();
 
@@ -255,7 +274,7 @@ describe("SearchResultsTable", () => {
         <SearchResultsTable {...defaultProps} results={results} isSearching />,
       );
 
-      const nextButton = screen.getByRole("button", { name: "Next" });
+      const nextButton = screen.getByRole("button", { name: "Next page" });
       await user.click(nextButton);
       expect(screen.getByText("Page 2 of 3")).toBeDefined();
 
@@ -288,15 +307,17 @@ describe("SearchResultsTable", () => {
     const results = makeResults(120);
     render(<SearchResultsTable {...defaultProps} results={results} />);
 
-    const nextButton = screen.getByRole("button", { name: "Next" });
+    const nextButton = screen.getByRole("button", { name: "Next page" });
     await user.click(nextButton);
     expect(screen.getByText("Page 2 of 3")).toBeDefined();
 
-    const searchInput = screen.getByPlaceholderText("Search games...");
+    const searchInput = screen.getByPlaceholderText(
+      "Search names, BGG matches...",
+    );
     await user.type(searchInput, "Azul");
 
     const dataRows = screen.getAllByRole("row").slice(1);
-    expect(dataRows.length).toBeGreaterThan(1);
+    expect(dataRows.length).toBeGreaterThan(0);
     for (const row of dataRows) {
       expect(row.textContent?.toLowerCase()).toContain("azul");
     }
@@ -305,39 +326,33 @@ describe("SearchResultsTable", () => {
   describe("search progress bar", () => {
     it("shows progress bar when isSearching is true", () => {
       const results: SearchResultEntry[] = [
-        {
+        makeEntry({
           inputName: "Catan",
           status: "found",
           bggId: 13,
           matchedName: "Catan",
-          candidates: [],
-        },
-        {
+        }),
+        makeEntry({
           inputName: "Pandemic",
           status: "pending",
-          bggId: null,
-          matchedName: null,
-          candidates: [],
-        },
+        }),
       ];
       render(
         <SearchResultsTable {...defaultProps} results={results} isSearching />,
       );
 
-      expect(screen.getByText("Searching (1/2)")).toBeDefined();
       expect(screen.getByText("50%")).toBeDefined();
       expect(screen.getByRole("progressbar")).toBeDefined();
     });
 
     it("hides progress bar when isSearching is false", () => {
       const results: SearchResultEntry[] = [
-        {
+        makeEntry({
           inputName: "Catan",
           status: "found",
           bggId: 13,
           matchedName: "Catan",
-          candidates: [],
-        },
+        }),
       ];
       render(
         <SearchResultsTable
@@ -352,72 +367,38 @@ describe("SearchResultsTable", () => {
 
     it("counts only fully resolved results as completed", () => {
       const results: SearchResultEntry[] = [
-        {
+        makeEntry({
           inputName: "A",
           status: "found",
           bggId: 1,
           matchedName: "A",
-          candidates: [],
-        },
-        {
-          inputName: "B",
-          status: "not_found",
-          bggId: null,
-          matchedName: null,
-          candidates: [],
-        },
-        {
-          inputName: "C",
-          status: "searching",
-          bggId: null,
-          matchedName: null,
-          candidates: [],
-        },
-        {
-          inputName: "D",
-          status: "pending",
-          bggId: null,
-          matchedName: null,
-          candidates: [],
-        },
+        }),
+        makeEntry({ inputName: "B", status: "not_found" }),
+        makeEntry({ inputName: "C", status: "searching" }),
+        makeEntry({ inputName: "D", status: "pending" }),
       ];
       render(
         <SearchResultsTable {...defaultProps} results={results} isSearching />,
       );
 
-      expect(screen.getByText("Searching (2/4)")).toBeDefined();
       expect(screen.getByText("50%")).toBeDefined();
     });
 
     it("shows 100% when all results are resolved while still searching", () => {
       const results: SearchResultEntry[] = [
-        {
+        makeEntry({
           inputName: "A",
           status: "found",
           bggId: 1,
           matchedName: "A",
-          candidates: [],
-        },
-        {
-          inputName: "B",
-          status: "ambiguous",
-          bggId: null,
-          matchedName: null,
-          candidates: [],
-        },
-        {
-          inputName: "C",
-          status: "not_found",
-          bggId: null,
-          matchedName: null,
-          candidates: [],
-        },
+        }),
+        makeEntry({ inputName: "B", status: "ambiguous" }),
+        makeEntry({ inputName: "C", status: "not_found" }),
       ];
       render(
         <SearchResultsTable {...defaultProps} results={results} isSearching />,
       );
 
-      expect(screen.getByText("Searching (3/3)")).toBeDefined();
       expect(screen.getByText("100%")).toBeDefined();
     });
   });

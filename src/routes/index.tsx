@@ -28,12 +28,8 @@ function Home() {
   const collection = useCollectionStream();
 
   const hasCredentials = Boolean(config?.username && config?.password);
-  const hasToken = Boolean(config?.apiToken);
   const isSearching = search.phase === "searching";
 
-  const searchWarning = !hasToken
-    ? "Set your XML API token in settings to search by name."
-    : null;
   const idsWarning = !hasCredentials
     ? "Set your BGG username and password in settings to add games."
     : null;
@@ -49,14 +45,8 @@ function Home() {
           ? "search_results"
           : "input";
 
-  const handleSearchByName = (names: string[], includeExpansions: boolean) => {
-    if (!config?.apiToken) {
-      toast.error(
-        "Please set your XML API token in settings to search by name",
-      );
-      return;
-    }
-    search.startSearch(names, config.apiToken, includeExpansions);
+  const handleSearchByName = (names: string[]) => {
+    search.startSearch(names);
   };
 
   const handleAddByIds = (entries: ParsedIdEntry[]) => {
@@ -154,7 +144,6 @@ function Home() {
             onSearchByName={handleSearchByName}
             onAddByIds={handleAddByIds}
             isSearching={isSearching}
-            searchWarning={searchWarning}
             idsWarning={idsWarning}
           />
         )}
@@ -184,7 +173,9 @@ function Home() {
                 results={search.results}
                 onResolve={search.resolveAmbiguous}
                 onSkip={search.skipAmbiguous}
+                onRemove={search.removeResult}
                 onAddToCollection={handleAddToCollection}
+                onCancelSearch={search.cancelSearch}
                 isSearching={isSearching}
               />
             </>

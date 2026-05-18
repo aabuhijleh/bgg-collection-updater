@@ -91,7 +91,6 @@ export function SettingsSheet() {
     if (isOpen && config) {
       form.setFieldValue("username", config.username);
       form.setFieldValue("password", config.password);
-      form.setFieldValue("apiToken", config.apiToken);
     }
     setOpen(isOpen);
   };
@@ -105,9 +104,7 @@ export function SettingsSheet() {
     });
   };
 
-  const hasConfig = Boolean(
-    config?.username && config.password && config.apiToken,
-  );
+  const hasConfig = Boolean(config?.username && config.password);
 
   return (
     <Sheet open={open} onOpenChange={handleOpen}>
@@ -124,16 +121,8 @@ export function SettingsSheet() {
         <SheetHeader>
           <SheetTitle>BGG Settings</SheetTitle>
           <SheetDescription>
-            Enter your BoardGameGeek credentials. The API token is only needed
-            for searching games by name.{" "}
-            <a
-              href="https://boardgamegeek.com/applications"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-foreground underline"
-            >
-              How to get an API token
-            </a>
+            Enter your BoardGameGeek credentials for adding games to your
+            collection.
           </SheetDescription>
         </SheetHeader>
         <form
@@ -175,24 +164,6 @@ export function SettingsSheet() {
               </Field>
             )}
           </form.Field>
-          <form.Field name="apiToken">
-            {(field) => (
-              <Field>
-                <FieldLabel htmlFor={field.name}>XML API Token</FieldLabel>
-                <PasswordInput
-                  id={field.name}
-                  value={field.state.value}
-                  onBlur={field.handleBlur}
-                  onChange={(v) => field.handleChange(v)}
-                  placeholder="your-api-bearer-token"
-                />
-                <FieldDescription>
-                  Only needed for searching games by name. Not required if you
-                  already have BGG IDs.
-                </FieldDescription>
-              </Field>
-            )}
-          </form.Field>
           <div className="flex gap-2 pt-2">
             <Button type="submit" disabled={saveConfig.isPending}>
               {saveConfig.isPending ? "Saving..." : "Save"}
@@ -207,8 +178,7 @@ export function SettingsSheet() {
                 <AlertDialogHeader>
                   <AlertDialogTitle>Clear all settings?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    This will remove your saved username, password, and API
-                    token.
+                    This will remove your saved username and password.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
