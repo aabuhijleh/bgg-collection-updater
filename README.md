@@ -57,6 +57,10 @@ No other data is persisted to disk. Search results and collection state exist on
 2. **Review search results** -- the app searches the BGG XML API for each name (requires an API token). Ambiguous matches expand inline so you can pick the right game. Download results as CSV.
 3. **Add to collection** -- the app launches a headless browser, logs into BGG with your username and password, checks what you already own, and adds the new games. No API token needed for this step. Progress streams in real time.
 
+## Related
+
+**[BGG Scan](https://bgg-scan.aabuhijleh.com/)** ([source](https://github.com/aabuhijleh/bgg-scan)) -- scan board game barcodes with your phone camera to quickly look up games on BoardGameGeek. Useful for identifying games at a store or collection and getting their BGG IDs, which you can then bulk-add here.
+
 ## Credits
 
 Based on the work by [@fenglisch](https://github.com/fenglisch):
