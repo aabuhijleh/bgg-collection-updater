@@ -9,6 +9,7 @@ import {
 } from "@tanstack/react-table";
 import {
   AlertCircle,
+  ArrowLeft,
   CheckCircle2,
   Clock,
   Download,
@@ -48,6 +49,7 @@ interface CollectionProgressProps {
   onCancel?: () => void;
   onRetryFailed?: () => void;
   onReset?: () => void;
+  onBackToResults?: () => void;
 }
 
 const statusDisplay: Record<
@@ -147,6 +149,7 @@ export function CollectionProgress({
   onCancel,
   onRetryFailed,
   onReset,
+  onBackToResults,
 }: CollectionProgressProps) {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 50 });
@@ -210,15 +213,32 @@ export function CollectionProgress({
 
   return (
     <section className="space-y-4">
-      <div>
-        <h2 className="font-semibold text-2xl tracking-tight">
-          {phase === "done" ? "Results" : "Adding to Collection"}
-        </h2>
-        <p className="text-muted-foreground text-sm">
-          {phase === "done"
-            ? "Here's what happened."
-            : "Logging into BGG and adding games in a browser window."}
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 className="font-semibold text-2xl tracking-tight">
+            {phase === "done" ? "Results" : "Adding to Collection"}
+          </h2>
+          <p className="text-muted-foreground text-sm">
+            {phase === "done"
+              ? "Here's what happened."
+              : "Logging into BGG and adding games in a browser window."}
+          </p>
+        </div>
+        {phase === "done" && (onBackToResults || onReset) && (
+          <div className="flex flex-wrap gap-2">
+            {onBackToResults && (
+              <Button variant="outline" size="sm" onClick={onBackToResults}>
+                <ArrowLeft />
+                Back to results
+              </Button>
+            )}
+            {onReset && (
+              <Button variant="outline" size="sm" onClick={onReset}>
+                Start Over
+              </Button>
+            )}
+          </div>
+        )}
       </div>
 
       {error && (
@@ -277,11 +297,6 @@ export function CollectionProgress({
               {failedCount > 0 && onRetryFailed && (
                 <Button variant="outline" size="sm" onClick={onRetryFailed}>
                   Retry Failed ({failedCount})
-                </Button>
-              )}
-              {onReset && (
-                <Button variant="outline" size="sm" onClick={onReset}>
-                  Start Over
                 </Button>
               )}
             </div>

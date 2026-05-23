@@ -352,5 +352,62 @@ describe("CollectionProgress", () => {
       expect(screen.getByText("Start Over")).toBeDefined();
       expect(screen.getByText("Retry Failed (1)")).toBeDefined();
     });
+
+    it("shows Start Over even when only skipped games are present", () => {
+      const games: CollectionGameEntry[] = [
+        { bggId: 13, name: "Catan", status: "skipped" },
+      ];
+      render(
+        <CollectionProgress
+          games={games}
+          phase="done"
+          progress={{ current: 0, total: 1 }}
+          error={null}
+          onReset={() => {}}
+        />,
+      );
+      expect(screen.getByText("Start Over")).toBeDefined();
+    });
+
+    it("shows Back to results button when onBackToResults is provided", async () => {
+      const user = userEvent.setup();
+      let backCalled = false;
+      const games: CollectionGameEntry[] = [
+        { bggId: 1, name: "Catan", status: "added" },
+      ];
+      render(
+        <CollectionProgress
+          games={games}
+          phase="done"
+          progress={{ current: 1, total: 1 }}
+          error={null}
+          onReset={() => {}}
+          onBackToResults={() => {
+            backCalled = true;
+          }}
+        />,
+      );
+      const backButton = screen.getByRole("button", {
+        name: /Back to results/,
+      });
+      await user.click(backButton);
+      expect(backCalled).toBe(true);
+    });
+
+    it("does not render Back to results when onBackToResults is undefined", () => {
+      const games: CollectionGameEntry[] = [
+        { bggId: 1, name: "Catan", status: "added" },
+      ];
+      render(
+        <CollectionProgress
+          games={games}
+          phase="done"
+          progress={{ current: 1, total: 1 }}
+          error={null}
+          onReset={() => {}}
+        />,
+      );
+      expect(screen.queryByText(/Back to results/)).toBeNull();
+    });
   });
 });

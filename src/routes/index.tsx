@@ -192,6 +192,9 @@ function Home() {
               onCancel={collection.cancel}
               onRetryFailed={handleRetryFailed}
               onReset={handleReset}
+              onBackToResults={
+                search.results.length > 0 ? collection.reset : undefined
+              }
             />
           </>
         )}
