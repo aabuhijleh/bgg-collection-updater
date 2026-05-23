@@ -13,6 +13,7 @@ Bulk-add board games to your [BoardGameGeek](https://boardgamegeek.com) collecti
 
 ```bash
 bun install
+bunx playwright install
 bun start
 ```
 
