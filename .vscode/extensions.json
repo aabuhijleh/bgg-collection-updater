@@ -2,8 +2,7 @@
   "recommendations": [
     "biomejs.biome",
     "bradlc.vscode-tailwindcss",
-    "blazejkustra.react-compiler-marker",
-    "oven.bun-vscode"
+    "blazejkustra.react-compiler-marker"
   ],
   "unwantedRecommendations": ["esbenp.prettier-vscode"]
 }

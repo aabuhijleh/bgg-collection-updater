@@ -1,13 +1,11 @@
 {
   "files.watcherExclude": {
     "**/__generated__/**/*": true,
-    "**/routeTree.gen.ts": true,
-    "**/opensrc/**": true
+    "**/routeTree.gen.ts": true
   },
   "search.exclude": {
     "**/__generated__/**/*": true,
     "**/routeTree.gen.ts": true,
-    "**/opensrc/**": true,
     "CLAUDE.md": true,
     ".claude/**": true,
     ".agents/**": true
