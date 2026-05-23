@@ -10,7 +10,7 @@ Bulk-add board games to your [BoardGameGeek](https://boardgamegeek.com) collecti
 - [Node.js](https://nodejs.org) v24+ (JS runtime for the dev server)
 - A BGG account
 
-> **Why both?** Bun on Windows currently can't launch Playwright's browser driver — `chromium.launch()` hangs indefinitely. The dev server runs under Node so server-side Playwright code works on all platforms.
+> **Why Node?** Bun on Windows can't launch Playwright's browser driver — `chromium.launch()` hangs indefinitely. Since this app's collection upload flow runs Playwright server-side, the dev server has to execute under Node.
 
 ## Quick Start
 
