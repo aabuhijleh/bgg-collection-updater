@@ -3,6 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "prestart": "node scripts/check-node.mjs",
     "start": "vite dev --port 3000",
     "build": "vite build",
     "preview": "vite preview",
@@ -11,6 +12,9 @@
     "check:eslint": "eslint --no-warn-ignored",
     "typecheck": "tsc --noEmit",
     "postinstall": "lefthook install"
+  },
+  "engines": {
+    "node": ">=24"
   },
   "dependencies": {
     "@base-ui/react": "^1.4.1",
