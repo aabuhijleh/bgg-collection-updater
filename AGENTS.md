@@ -62,7 +62,7 @@ src/
 
 ## Conventions
 
-- **Always use `bun` and `bunx`.** Never use `npm`, `npx`, `yarn`, `pnpm`, or any other package manager/runner.
+- **Always use `bun` and `bunx`** as the package manager and script runner. Never use `npm`, `npx`, `yarn`, `pnpm`. The JS runtime that executes scripts is Node, not Bun — do not re-add `bun = true` to a `bunfig.toml`. Bun on Windows can't launch Playwright (`chromium.launch()` hangs), and the dev server hosts the Playwright server function.
 - Feature folders are self-contained: `*.server.ts` (server functions), `use-*.ts` (hooks), `*.tsx` (UI)
 - React Query: custom hooks wrapping useQuery/useMutation, queryOptions helper, staleTime: Infinity for stable data
 - No useEffect unless escape hatch. No useMemo/useCallback (React Compiler handles it).

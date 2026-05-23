@@ -6,8 +6,11 @@ Bulk-add board games to your [BoardGameGeek](https://boardgamegeek.com) collecti
 
 ## Prerequisites
 
-- [Bun](https://bun.sh)
+- [Bun](https://bun.sh) (package manager and script runner)
+- [Node.js](https://nodejs.org) v24+ (JS runtime for the dev server)
 - A BGG account
+
+> **Why both?** Bun on Windows currently can't launch Playwright's browser driver — `chromium.launch()` hangs indefinitely. The dev server runs under Node so server-side Playwright code works on all platforms.
 
 ## Quick Start
 
