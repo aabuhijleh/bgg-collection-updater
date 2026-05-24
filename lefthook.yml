@@ -12,7 +12,7 @@ pre-commit:
 
     - name: eslint
       glob: "src/**/*.{ts,tsx}"
-      run: bun run check:eslint
+      run: bunx eslint --no-warn-ignored {staged_files}
 
     - name: tests
       glob: "src/**/*.{ts,tsx}"
