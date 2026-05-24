@@ -58,17 +58,16 @@ export async function getExistingCollectionIds(
 
     const links = page.locator('[id^="results_objectname"] a.primary');
     const count = await links.count();
-
     for (let j = 0; j < count; j++) {
       const href = await links.nth(j).getAttribute("href");
       if (href) {
-        const match = href.match(/\/boardgame\/(\d+)/);
+        const match = href.match(/\/boardgame(?:expansion)?\/(\d+)/);
         if (match) ids.push(+match[1]);
       }
     }
   }
 
-  return ids;
+  return Array.from(new Set(ids));
 }
 
 export async function addGameToCollection(
